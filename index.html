@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Creative Farm App Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M12 21v-8" />
+              <path d="M12 13c-4.2 0-7-2.7-7-7 4.3 0 7 2.7 7 7Z" />
+              <path d="M12 13c4.2 0 7-2.7 7-7-4.3 0-7 2.7-7 7Z" />
+            </svg>
+          </div>
+          <div>
+            <div class="brand-title">Creative Farm</div>
+            <div class="brand-subtitle">125-acre operations</div>
+          </div>
+        </div>
+        <nav id="nav" class="nav-list"></nav>
+        <div class="sync-card">
+          <div class="sync-title">Last sync</div>
+          <div>Today 6:45 PM</div>
+          <div class="sync-device">Android tablet</div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h1 id="page-title">Farm Operations Dashboard</h1>
+            <p>Zone-wise and row-wise field management</p>
+          </div>
+          <div class="topbar-actions">
+            <span class="pill warn">Offline mode</span>
+            <span class="pill info">Pending sync: 12</span>
+            <span class="user-badge">Farm Manager</span>
+          </div>
+        </header>
+
+        <section id="content" class="content" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
