@@ -39,7 +39,7 @@ const navItems = [
   ["equipment", "Equipment"],
   ["workorders", "Work Orders"],
   ["approvals", "Input Approval"],
-  ["costs", "Zone Costs"],
+  ["costs", "Block Costs"],
   ["reports", "Reports"],
   ["users", "Users & Roles"],
   ["sync", "Sync & Backup"],
@@ -61,50 +61,51 @@ const pageTitles = {
   equipment: "Equipment & Utility Tracking",
   workorders: "Work Order Planning",
   approvals: "Input Usage Approval",
-  costs: "Zone-wise Cost Center",
+  costs: "Block-wise Cost Center",
   reports: "Reports & Analytics",
-  users: "Users, Roles, And Zone Access",
+  users: "Users, Roles, And Block Access",
   sync: "Offline Sync And Cloud Backup",
   admin: "Farm Setup & Admin"
 };
 
-const zones = ["Zone A", "Zone B", "Zone C", "Zone D", "Zone E"];
-const blocks = ["Block A", "Block B", "Block C", "Block D", "Block E"];
+const zones = ["South Block", "North West Block", "Equipment Yard", "East Block"];
+const blocks = ["South Block", "North West Block", "Equipment Yard", "East Block"];
 const plots = ["Plot A1", "Plot A2", "Plot B1", "Plot C1", "Plot D1", "Plot E1"];
-const rows = ["Row 1-5", "Row 6-10", "Row 11-15", "Row 16-20", "Full Zone"];
+const rows = ["Row 1-5", "Row 6-10", "Row 11-15", "Row 16-20", "Full Block"];
 const treeTypes = ["Water Coconut", "Nilembu Timber", "Alphonso Mango", "Teak", "Lemon"];
 const farmProperties = [
-  ["Tree type", "Water Coconut", "8,400", "Farm -> Block A -> Plot A1 -> Rows 1-20"],
-  ["Tree type", "Nilembu Timber", "4,250", "Farm -> Block B -> Plot B1 -> Rows 1-16"],
-  ["Tree type", "Alphonso Mango", "5,770", "Farm -> Block C -> Plot C1 -> Rows 1-24"],
-  ["Tractor", "Mahindra 575", "3", "Equipment yard"],
-  ["JCB", "JCB Backhoe", "1", "Equipment yard"],
-  ["Water tank", "10,000 L tank", "6", "Block A, C, E"],
-  ["Trailer", "Farm trailer", "4", "Equipment yard"]
+  ["Tree", "Water Coconut", ""],
+  ["Tree", "Nilembu Timber", ""],
+  ["Tree", "Alphonso Mango", ""],
+  ["Equipment", "Tractor", "3"],
+  ["Equipment", "JCB", "1"],
+  ["Equipment", "Water Tank", "6"],
+  ["Equipment", "Trailer", "4"]
 ];
+const farmPropertyTypes = [...new Set(farmProperties.map(([type]) => type))];
+const farmPropertyNames = [...new Set(farmProperties.map(([, name]) => name))];
+const treePropertyNames = [...new Set(farmProperties.filter(([type]) => type === "Tree").map(([, name]) => name))];
 const lastIrrigationDates = {
-  "Zone A|Row 1-5": "May 22, 2026",
-  "Zone A|Row 6-10": "May 21, 2026",
-  "Zone A|Row 11-15": "May 20, 2026",
-  "Zone A|Row 16-20": "May 19, 2026",
-  "Zone A|Full Zone": "May 22, 2026",
-  "Zone B|Row 1-5": "May 23, 2026",
-  "Zone B|Row 6-10": "May 21, 2026",
-  "Zone C|Full Zone": "May 18, 2026",
-  "Zone D|Full Zone": "May 20, 2026",
-  "Zone E|Full Zone": "May 17, 2026"
+  "South Block|Row 1-5": "May 22, 2026",
+  "South Block|Row 6-10": "May 21, 2026",
+  "South Block|Row 11-15": "May 20, 2026",
+  "South Block|Row 16-20": "May 19, 2026",
+  "South Block|Full Block": "May 22, 2026",
+  "North West Block|Row 1-5": "May 23, 2026",
+  "North West Block|Row 6-10": "May 21, 2026",
+  "East Block|Full Block": "May 18, 2026",
+  "Equipment Yard|Full Block": "May 20, 2026"
 };
 const lastFertigationDates = {
-  "Zone A|Row 1-5": "May 18, 2026",
-  "Zone A|Row 6-10": "May 17, 2026",
-  "Zone A|Row 11-15": "May 16, 2026",
-  "Zone A|Row 16-20": "May 15, 2026",
-  "Zone A|Full Zone": "May 18, 2026",
-  "Zone B|Row 1-5": "May 19, 2026",
-  "Zone B|Row 6-10": "May 17, 2026",
-  "Zone C|Full Zone": "May 14, 2026",
-  "Zone D|Full Zone": "May 15, 2026",
-  "Zone E|Full Zone": "May 13, 2026"
+  "South Block|Row 1-5": "May 18, 2026",
+  "South Block|Row 6-10": "May 17, 2026",
+  "South Block|Row 11-15": "May 16, 2026",
+  "South Block|Row 16-20": "May 15, 2026",
+  "South Block|Full Block": "May 18, 2026",
+  "North West Block|Row 1-5": "May 19, 2026",
+  "North West Block|Row 6-10": "May 17, 2026",
+  "East Block|Full Block": "May 14, 2026",
+  "Equipment Yard|Full Block": "May 15, 2026"
 };
 let active = "dashboard";
 let selectedWorkPlanDate = "2026-05-24";
@@ -146,29 +147,29 @@ const landLayoutRows = {
 
 const workPlanActivities = {
   "2026-05-22": [
-    ["6:15 AM", "Irrigation", "Zone A rows 1-10", "Bore Motor 2", "Completed", "May 22, 2026", "Farm Manager"],
-    ["10:30 AM", "Drip repair", "Zone B rows 8-12", "Ramesh", "Completed", "May 22, 2026", "Supervisor 1"]
+    ["6:15 AM", "Irrigation", "South Block rows 1-10", "Bore Motor 2", "Completed", "May 22, 2026", "Farm Manager"],
+    ["10:30 AM", "Drip repair", "North West Block rows 8-12", "Ramesh", "Completed", "May 22, 2026", "Supervisor 1"]
   ],
   "2026-05-23": [
-    ["7:00 AM", "Fertigation", "Zone B full zone", "Stock person", "Completed", "May 23, 2026", "Stock person"],
+    ["7:00 AM", "Fertigation", "North West Block full block", "Stock person", "Completed", "May 23, 2026", "Stock person"],
     ["2:30 PM", "Equipment service", "Tractor 2", "Mechanic", "Open", "-", "-"]
   ],
   "2026-05-24": [
-    ["6:00 AM", "Irrigation", "Zone A rows 1-20", "Bore Motor 2", "Completed", "May 24, 2026", "Farm Manager"],
-    ["9:00 AM", "Labor", "Zone D weeding", "Team 1", "In Progress", "May 24, 2026", "Supervisor 1"],
-    ["2:00 PM", "Pest treatment", "Zone E row 12", "Supervisor 2", "Open", "-", "-"]
+    ["6:00 AM", "Irrigation", "South Block rows 1-20", "Bore Motor 2", "Completed", "May 24, 2026", "Farm Manager"],
+    ["9:00 AM", "Labor", "East Block weeding", "Team 1", "In Progress", "May 24, 2026", "Supervisor 1"],
+    ["2:00 PM", "Pest treatment", "East Block row 12", "Supervisor 2", "Open", "-", "-"]
   ],
   "2026-05-25": [
-    ["6:30 AM", "Fertigation", "Zone A full zone", "Stock person", "Open", "-", "-"],
-    ["11:00 AM", "Drip repair", "Zone B rows 10-15", "Ramesh", "Hold", "May 25, 2026", "Farm Manager"],
-    ["3:00 PM", "Harvest prep", "Zone A rows 1-8", "Supervisor 1", "Open", "-", "-"]
+    ["6:30 AM", "Fertigation", "South Block full block", "Stock person", "Open", "-", "-"],
+    ["11:00 AM", "Drip repair", "North West Block rows 10-15", "Ramesh", "Hold", "May 25, 2026", "Farm Manager"],
+    ["3:00 PM", "Harvest prep", "South Block rows 1-8", "Supervisor 1", "Open", "-", "-"]
   ],
   "2026-05-26": [
-    ["7:15 AM", "Irrigation", "Zone C full zone", "Bore Motor 1", "Open", "-", "-"],
-    ["1:00 PM", "Pest observation", "Zone E rows 10-14", "Supervisor 2", "Open", "-", "-"]
+    ["7:15 AM", "Irrigation", "East Block full block", "Bore Motor 1", "Open", "-", "-"],
+    ["1:00 PM", "Pest observation", "East Block rows 10-14", "Supervisor 2", "Open", "-", "-"]
   ],
   "2026-05-27": [
-    ["8:00 AM", "Labor", "Zone B pruning", "Team 2", "Open", "-", "-"],
+    ["8:00 AM", "Labor", "North West Block pruning", "Team 2", "Open", "-", "-"],
     ["4:00 PM", "Stock check", "Fertilizer store", "Stock person", "Open", "-", "-"]
   ]
 };
@@ -314,7 +315,7 @@ function dashboard() {
     ["Today Labor Cost", "Rs 18,600", "32 workers", "info"],
     ["Fertilizer Stock", "Low", "19-19-19 below limit", "warn"],
     ["Pest Alerts", "3 Open", "1 high severity", "bad"],
-    ["Irrigation", "72%", "Zone C pending", "warn"],
+    ["Irrigation", "72%", "East Block pending", "warn"],
     ["Work Orders", "18 Open", "6 due today", "violet"],
     ["Input Approvals", "5 Waiting", "Fertilizer issue queue", "warn"],
     ["Cost / Acre", "Rs 4,820", "Month to date", "info"],
@@ -333,10 +334,10 @@ function dashboard() {
   }).join("");
 
   const alerts = [
-    "High pest severity in Zone E Row 12",
+    "High pest severity in East Block Row 12",
     "Bore Motor 1 service due",
     "19-19-19 stock below 50 kg",
-    "No irrigation entry for Zone C"
+    "No irrigation entry for East Block"
   ].map((alert) => `<div class="alert-item"><span class="alert-symbol">!</span><span>${alert}</span></div>`).join("");
 
   return `
@@ -379,13 +380,13 @@ function dashboard() {
       `)}
       ${card(`
         <div class="section-head"><h2>Harvest Pipeline</h2>${pill("Batch-wise", "good")}</div>
-        <div class="report-metric"><span class="small-label">Next batch</span><strong>HB-2026-07-ZoneA</strong></div>
+        <div class="report-metric"><span class="small-label">Next batch</span><strong>HB-2026-07-SouthBlock</strong></div>
         <div class="report-metric compact"><span class="small-label">Expected quantity</span><strong>2,500 kg</strong></div>
       `)}
       ${card(`
         <div class="section-head"><h2>Cost Alerts</h2>${pill("Review", "warn")}</div>
         <div class="alert-list">
-          <div class="alert-item"><span class="alert-symbol">!</span><span>Zone D labor cost is 14% above monthly plan</span></div>
+          <div class="alert-item"><span class="alert-symbol">!</span><span>East Block labor cost is 14% above monthly plan</span></div>
           <div class="alert-item"><span class="alert-symbol">!</span><span>Tractor maintenance cost crossed Rs 22,000</span></div>
         </div>
       `)}
@@ -395,7 +396,7 @@ function dashboard() {
 
 function today() {
   const actions = [
-    ["irrigation", "Irrigation", "Record zone and row water activity"],
+    ["irrigation", "Irrigation", "Record block and row water activity"],
     ["planning", "Today's Plan", "Irrigation, labor, repair, stock, and harvest schedule"],
     ["fertigation", "Fertigation", "Use fertilizer and reduce stock"],
     ["pest", "Pest Observation", "Capture issue with photo"],
@@ -409,9 +410,9 @@ function today() {
   ];
 
   const rowsHtml = [
-    ["7:15 AM", "Irrigation", "Zone A", pill("Saved", "good"), "Manager"],
-    ["9:20 AM", "Labor", "All Zones", pill("Saved", "good"), "Supervisor"],
-    ["11:45 AM", "Pest", "Zone E", pill("Follow-up", "warn"), "Manager"]
+    ["7:15 AM", "Irrigation", "South Block", pill("Saved", "good"), "Manager"],
+    ["9:20 AM", "Labor", "All Blocks", pill("Saved", "good"), "Supervisor"],
+    ["11:45 AM", "Pest", "East Block", pill("Follow-up", "warn"), "Manager"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   return `
@@ -430,7 +431,7 @@ function today() {
       <div class="section-head"><h2>Today's Saved Entries</h2></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Time</th><th>Activity</th><th>Zone</th><th>Status</th><th>Entered by</th></tr></thead>
+          <thead><tr><th>Time</th><th>Activity</th><th>Block</th><th>Status</th><th>Entered by</th></tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
       </div>
@@ -442,7 +443,7 @@ function entryForm(type) {
   const configs = {
     irrigation: ["Add Irrigation Entry", ["Water Source", "Motor Used", "Start Time", "End Time", "Drip Condition"]],
     fertigation: ["Add Fertigation Entry", ["Fertilizer Type", "Fertilizer Name", "Quantity Used", "Unit", "Application Method"]],
-    pest: ["Add Pest / Disease Observation", ["Tree Type", "Pest / Disease", "Severity", "Affected Tree Count", "Follow-up Date"]],
+    pest: ["Add Pest / Disease Observation", ["Tree Type", "Name", "Pest / Disease", "Severity", "Affected Tree Count", "Follow-up Date"]],
     labor: ["Add Labor Activity", ["Worker Name", "Worker Type", "Activity Performed", "Work Hours", "Daily Cost"]],
     stock: ["Add Stock Transaction", ["Transaction Type", "Item Category", "Item Name", "Quantity", "Cost"]],
     harvest: ["Add Harvest Batch", ["Batch Code", "Crop Family", "Crop Type", "Quantity Kg", "Labor Cost", "Transport Cost", "Buyer"]],
@@ -450,9 +451,15 @@ function entryForm(type) {
   };
 
   const [title, fields] = configs[type];
+  const blockOptions = landLayoutBlocks.map((block) => block.name);
+  const rowOptions = rows;
   const extraFields = fields.map((name, index) => {
     const options = name.includes("Severity")
       ? ["Low", "Medium", "High"]
+      : name === "Tree Type"
+        ? ["Tree"]
+      : name === "Name"
+        ? treePropertyNames
       : name.includes("Type") || name.includes("Method") || name.includes("Source")
         ? ["Select", "Option 1", "Option 2", "Option 3"]
         : null;
@@ -466,17 +473,20 @@ function entryForm(type) {
     "Offline entries sync later."
   ].map((rule) => `<div class="rule-item">${icons.check}<span>${rule}</span></div>`).join("");
 
+  const usesBlockLocation = ["irrigation", "fertigation", "pest"].includes(type);
   const locationFields = type === "irrigation" || type === "fertigation"
-    ? `${selectField("Zone", `${type}-zone`, zones)}${selectField("Row / Row Range", `${type}-row`, rows)}`
-    : `${field("Zone", "text", zones)}${field("Row / Row Range", "text", rows)}`;
+    ? `${selectField("Block", `${type}-zone`, blockOptions)}${selectField("Row / Row Range", `${type}-row`, rowOptions)}`
+    : usesBlockLocation
+      ? `${field("Block", "text", blockOptions)}${field("Row / Row Range", "text", rowOptions)}`
+      : `${field("Block", "text", zones)}${field("Row / Row Range", "text", rows)}`;
 
   const detailPanel = type === "irrigation" || type === "fertigation"
     ? `
       <div class="section-head"><h2>${type === "irrigation" ? "Irrigation" : "Fertigation"} Lookup</h2>${pill("Auto pulled", "info")}</div>
       <div class="report-metric">
-        <span class="small-label">Last ${type} for selected zone and rows</span>
-        <strong id="last-${type}-date">Select zone and row</strong>
-        <div id="last-${type}-context" class="kpi-sub">Zone A / Row 1-5</div>
+        <span class="small-label">Last ${type} for selected block and rows</span>
+        <strong id="last-${type}-date">Select block and row</strong>
+        <div id="last-${type}-context" class="kpi-sub">South Block / Row 1-5</div>
       </div>
       <div class="rule-list" style="margin-top:10px">${rules}</div>
     `
@@ -545,14 +555,14 @@ function structure() {
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   const propertyRows = farmProperties
-    .map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}<td><button class="mini-button">Remove</button></td></tr>`)
+    .map((row) => `<tr>${row.map((cell) => `<td>${cell || "-"}</td>`).join("")}<td><button class="mini-button">Remove</button></td></tr>`)
     .join("");
 
   const treeRows = [
-    ["Farm", "All Blocks", "All Plots", "All Rows", "Water Coconut", "14,500"],
-    ["Block A", "Block A", "Plot A1", "Rows 1-20", "Water Coconut", "8,400"],
-    ["Block B", "Block B", "Plot B1", "Rows 1-16", "Nilembu Timber", "4,250"],
-    ["Block C", "Block C", "Plot C1", "Rows 1-24", "Alphonso Mango", "5,770"]
+    ["Tree", "Water Coconut", "All Blocks", "All Rows", "14,500"],
+    ["Tree", "Water Coconut", "South Block", "Row 1-3", "1,265"],
+    ["Tree", "Nilembu Timber", "North West Block", "Row 1-2", "515"],
+    ["Tree", "Alphonso Mango", "East Block", "Row 1-2", "595"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   const selectedBlock = landLayoutBlocks.find((block) => block.name === selectedLandBlock) || landLayoutBlocks[0];
@@ -654,18 +664,15 @@ function structure() {
         <div class="section-head"><h2>Farm Property Master</h2>${pill("Configurable", "violet")}</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Type</th><th>Name</th><th>Count</th><th>Location</th><th>Action</th></tr></thead>
+            <thead><tr><th>Type</th><th>Name</th><th>Count</th><th>Action</th></tr></thead>
             <tbody>${propertyRows}</tbody>
           </table>
         </div>
       `)}
       ${entryPanel("Add / Edit Farm Property", [
-        ["Property Type", "text", ["Tree type", "Tractor", "JCB", "Water tank", "Trailer", "Pump", "Building", "Custom"]],
-        ["Property Name", "text", null, "Example: Water Coconut, Tractor, JCB"],
-        ["Count", "number", null, "How many"],
-        ["Block Level Location", "text", ["All Farm", ...blocks, "Equipment Yard"]],
-        ["Plot Level Location", "text", ["Not applicable", "All Plots", ...plots]],
-        ["Row Level Location", "text", ["Not applicable", "All Rows", ...rows]],
+        ["Property Type", "text", ["Tree", "Equipment"]],
+        ["Name", "text", null, "Example: Water Coconut or JCB"],
+        ["Count", "number", null, "Required for equipment, optional for tree master"],
         ["Status", "text", ["Active", "Inactive", "Needs service"]]
       ], "Save Property")}
     </div>
@@ -674,21 +681,20 @@ function structure() {
   const treePanel = `
     <div class="form-layout">
       ${card(`
-        <div class="section-head"><h2>Tree Type Assignment</h2>${pill("Farm / Block / Plot / Row", "info")}</div>
+        <div class="section-head"><h2>Tree Type Assignment</h2>${pill("Uses property master", "info")}</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Scope</th><th>Block</th><th>Plot</th><th>Rows</th><th>Tree Type</th><th>Count</th></tr></thead>
+            <thead><tr><th>Type</th><th>Name</th><th>Block</th><th>Rows</th><th>Count</th></tr></thead>
             <tbody>${treeRows}</tbody>
           </table>
         </div>
       `)}
       ${entryPanel("Assign Tree Type", [
-        ["Scope", "text", ["Farm", "Block", "Plot", "Rows"]],
-        ["Block", "text", ["All Blocks", ...blocks]],
-        ["Plot", "text", ["All Plots", ...plots]],
+        ["Type", "text", farmPropertyTypes],
+        ["Name", "text", farmPropertyNames],
+        ["Block", "text", ["All Blocks", ...landLayoutBlocks.map((block) => block.name)]],
         ["Rows", "text", ["All Rows", ...rows]],
-        ["Tree Type", "text", treeTypes],
-        ["Tree Count", "number", null, "How many trees"]
+        ["Count", "number", null, "How many trees"]
       ], "Save Assignment")}
     </div>
   `;
@@ -712,12 +718,12 @@ function structure() {
 
 function planning() {
   const planCards = [
-    ["Today's irrigation plan", "Zone A rows 1-20 complete, Zone C pending"],
+    ["Today's irrigation plan", "South Block rows 1-20 complete, East Block pending"],
     ["Today's labor plan", "32 workers across irrigation, weeding, harvest prep"],
-    ["Pending drip repair", "Zone B rows 10-15 assigned to Ramesh"],
-    ["Pending pest treatment", "Zone E row 12 high severity follow-up"],
-    ["Fertigation schedule", "Zone A tomorrow morning, 19-19-19"],
-    ["Harvest schedule", "Zone A mango batch on July 15"],
+    ["Pending drip repair", "North West Block rows 10-15 assigned to Ramesh"],
+    ["Pending pest treatment", "East Block row 12 high severity follow-up"],
+    ["Fertigation schedule", "South Block tomorrow morning, 19-19-19"],
+    ["Harvest schedule", "South Block mango batch on July 15"],
     ["Equipment service due", "Bore Motor 1 and Tractor 2"],
     ["Fertilizer stock low", "19-19-19 below 50 kg reorder level"]
   ].map(([title, desc]) => card(`<h2>${title}</h2><div class="kpi-sub">${desc}</div>`, "clickable")).join("");
@@ -775,7 +781,7 @@ function planning() {
         <div class="grid grid-2">
           ${dateFieldWithValue("Date", selectedWorkPlanDate)}
           ${field("Activity", "text", ["Irrigation", "Labor", "Drip repair", "Pest treatment", "Fertigation", "Harvest", "Equipment service"])}
-          ${field("Zone", "text", zones)}
+          ${field("Block", "text", zones)}
           ${field("Rows", "text", rows)}
           ${field("Assigned To", "text", ["Supervisor 1", "Supervisor 2", "Stock person", "Team 1", "Ramesh"])}
           ${field("Priority", "text", ["Low", "Medium", "High"])}
@@ -819,9 +825,9 @@ function planning() {
 
 function exceptions() {
   const issueRows = [
-    ["TE-301", "Zone E", "Row 12 / Tree 48", "Disease affected", "High", pill("Work order opened", "bad")],
-    ["TE-302", "Zone B", "Row 5 / Tree 17", "Dead tree", "Medium", pill("Replant planned", "warn")],
-    ["TE-303", "Zone A", "Row 3 / Tree 8", "High-value observation", "Low", pill("Monitor", "info")]
+    ["TE-301", "East Block", "Row 12 / Tree 48", "Disease affected", "High", pill("Work order opened", "bad")],
+    ["TE-302", "North West Block", "Row 5 / Tree 17", "Dead tree", "Medium", pill("Replant planned", "warn")],
+    ["TE-303", "South Block", "Row 3 / Tree 8", "High-value observation", "Low", pill("Monitor", "info")]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   return `
@@ -830,7 +836,7 @@ function exceptions() {
         <div class="section-head"><h2>Tree Exception Log</h2>${pill("Not routine entry", "warn")}</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Zone</th><th>Position</th><th>Exception</th><th>Severity</th><th>Status</th></tr></thead>
+            <thead><tr><th>ID</th><th>Block</th><th>Position</th><th>Exception</th><th>Severity</th><th>Status</th></tr></thead>
             <tbody>${issueRows}</tbody>
           </table>
         </div>
@@ -838,7 +844,7 @@ function exceptions() {
       ${card(`
         <div class="section-head"><h2>Add Tree Issue</h2></div>
         <div class="grid">
-          ${field("Zone", "text", zones)}
+          ${field("Block", "text", landLayoutBlocks.map((block) => block.name))}
           ${field("Row", "text", rows)}
           ${field("Tree Number", "number", null, "Tree position number")}
           ${field("Issue Type", "text", ["Fallen tree", "Dead tree / mortality", "Replanting", "Disease affected", "Special observation", "High-value tree"])}
@@ -855,23 +861,23 @@ function exceptions() {
 
 function workOrders() {
   const orders = [
-    ["WO-1042", "Drip repair", "Zone B", "Rows 10-15", "Ramesh", "Tomorrow", pill("Pending", "warn")],
-    ["WO-1043", "Pest spray", "Zone E", "Row 12", "Supervisor 2", "Today", pill("In progress", "info")],
-    ["WO-1044", "Pruning", "Zone A", "Full Zone", "Team 1", "Friday", pill("Planned", "violet")]
+    ["WO-1042", "Drip repair", "North West Block", "Rows 10-15", "Ramesh", "Tomorrow", pill("Pending", "warn")],
+    ["WO-1043", "Pest spray", "East Block", "Row 12", "Supervisor 2", "Today", pill("In progress", "info")],
+    ["WO-1044", "Pruning", "South Block", "Full Block", "Team 1", "Friday", pill("Planned", "violet")]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   return `
     <div class="grid grid-3">
       ${card(`<div class="kpi-label">Open Work Orders</div><div class="kpi-value">18</div><div class="kpi-sub">6 due today</div>${pill("Review", "warn")}`)}
       ${card(`<div class="kpi-label">Completed This Week</div><div class="kpi-value">42</div><div class="kpi-sub">Drip, weed, pest, pruning</div>${pill("Good", "good")}`)}
-      ${card(`<div class="kpi-label">Overdue</div><div class="kpi-value">3</div><div class="kpi-sub">Zone C and Zone E</div>${pill("Action", "bad")}`)}
+      ${card(`<div class="kpi-label">Overdue</div><div class="kpi-value">3</div><div class="kpi-sub">East Block and North West Block</div>${pill("Action", "bad")}`)}
     </div>
     <div class="form-layout" style="margin-top:14px">
       ${card(`
         <div class="section-head"><h2>Work Order Board</h2>${pill("Assign and track", "info")}</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Type</th><th>Zone</th><th>Rows</th><th>Assigned</th><th>Due</th><th>Status</th></tr></thead>
+            <thead><tr><th>ID</th><th>Type</th><th>Block</th><th>Rows</th><th>Assigned</th><th>Due</th><th>Status</th></tr></thead>
             <tbody>${orders}</tbody>
           </table>
         </div>
@@ -880,7 +886,7 @@ function workOrders() {
         <div class="section-head"><h2>Create Work Order</h2></div>
         <div class="grid">
           ${field("Work Type", "text", ["Drip repair", "Pest spray", "Fertigation", "Tree replacement", "Harvest prep", "Equipment maintenance", "Weed removal", "Pruning"])}
-          ${field("Zone", "text", zones)}
+          ${field("Block", "text", zones)}
           ${field("Rows", "text", rows)}
           ${field("Assigned To", "text", ["Ramesh", "Supervisor 1", "Supervisor 2", "Team 1"])}
           ${field("Due Date", "date")}
@@ -894,9 +900,9 @@ function workOrders() {
 function approvals() {
   const flow = ["Manager creates usage plan", "Stock person issues input", "Field worker confirms usage", "System reduces stock"];
   const approvalsTable = [
-    ["UP-2201", "19-19-19", "Zone A", "125 kg", "Issue pending", pill("Waiting", "warn")],
-    ["UP-2202", "Neem oil", "Zone E", "18 L", "Worker confirmation", pill("Issued", "info")],
-    ["UP-2203", "Urea", "Zone C", "80 kg", "Confirmed", pill("Reduce stock", "good")]
+    ["UP-2201", "19-19-19", "South Block", "125 kg", "Issue pending", pill("Waiting", "warn")],
+    ["UP-2202", "Neem oil", "East Block", "18 L", "Worker confirmation", pill("Issued", "info")],
+    ["UP-2203", "Urea", "North West Block", "80 kg", "Confirmed", pill("Reduce stock", "good")]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   return `
@@ -908,14 +914,14 @@ function approvals() {
         <div class="section-head"><h2>Input Usage Approval Queue</h2>${pill("No manual stock reduction", "bad")}</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Plan ID</th><th>Item</th><th>Zone</th><th>Quantity</th><th>Current Step</th><th>Status</th></tr></thead>
+            <thead><tr><th>Plan ID</th><th>Item</th><th>Block</th><th>Quantity</th><th>Current Step</th><th>Status</th></tr></thead>
             <tbody>${approvalsTable}</tbody>
           </table>
         </div>
       `)}
       ${entryPanel("Create Usage Plan", [
         ["Planned For", "date"],
-        ["Zone", "text", zones],
+        ["Block", "text", zones],
         ["Inventory Item", "text", ["19-19-19", "Neem oil", "Urea", "Diesel", "Drip spare part"]],
         ["Planned Quantity", "number", null, "Quantity"],
         ["Unit", "text", ["kg", "L", "pieces"]],
@@ -932,11 +938,10 @@ function approvals() {
 
 function costs() {
   const rowsHtml = [
-    ["Zone A", "Rs 1,240", "Rs 820", "18.5 hrs", "3.8 tons", pill("Profitable", "good")],
-    ["Zone B", "Rs 1,410", "Rs 760", "21.0 hrs", "3.4 tons", pill("Review", "warn")],
-    ["Zone C", "Rs 1,180", "Rs 910", "24.3 hrs", "3.1 tons", pill("Water cost", "warn")],
-    ["Zone D", "Rs 1,620", "Rs 740", "17.2 hrs", "2.9 tons", pill("Labor high", "bad")],
-    ["Zone E", "Rs 1,350", "Rs 880", "19.5 hrs", "3.6 tons", pill("Pest watch", "warn")]
+    ["South Block", "Rs 1,240", "Rs 820", "18.5 hrs", "3.8 tons", pill("Profitable", "good")],
+    ["North West Block", "Rs 1,410", "Rs 760", "21.0 hrs", "3.4 tons", pill("Review", "warn")],
+    ["Equipment Yard", "Rs 1,180", "Rs 910", "24.3 hrs", "3.1 tons", pill("Water cost", "warn")],
+    ["East Block", "Rs 1,620", "Rs 740", "17.2 hrs", "2.9 tons", pill("Labor high", "bad")]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   return `
@@ -948,17 +953,17 @@ function costs() {
     </div>
     <div class="form-layout" style="margin-top:14px">
       ${card(`
-        <div class="section-head"><h2>Zone-wise Cost Center</h2>${pill("Compare profitability", "info")}</div>
+        <div class="section-head"><h2>Block-wise Cost Center</h2>${pill("Compare profitability", "info")}</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Zone</th><th>Labor / Acre</th><th>Fertilizer / Acre</th><th>Irrigation Hours</th><th>Yield Estimate</th><th>Signal</th></tr></thead>
+            <thead><tr><th>Block</th><th>Labor / Acre</th><th>Fertilizer / Acre</th><th>Irrigation Hours</th><th>Yield Estimate</th><th>Signal</th></tr></thead>
             <tbody>${rowsHtml}</tbody>
           </table>
         </div>
       `)}
-      ${entryPanel("Add Zone Cost", [
+      ${entryPanel("Add Block Cost", [
         ["Date", "date"],
-        ["Zone", "text", zones],
+        ["Block", "text", zones],
         ["Cost Category", "text", ["Labor", "Fertilizer", "Chemical", "Drip repair", "Tractor work", "Utility", "Transport"]],
         ["Amount", "number", null, "Cost amount"],
         ["Linked Activity", "text", ["Irrigation", "Fertigation", "Pest", "Labor", "Harvest", "Equipment"]],
@@ -972,8 +977,8 @@ function reports() {
   const reportCards = [
     ["Daily Summary", "Irrigation missed, labor used, urgent issues"],
     ["Weekly Block Health", "Growth, drip repair, soil moisture, pest trend"],
-    ["Monthly Cost", "Fertilizer, labor, utility, mortality, zone performance"],
-    ["Yearly Productivity", "Yield, cost per acre, mortality, best/worst zones"]
+    ["Monthly Cost", "Fertilizer, labor, utility, mortality, block performance"],
+    ["Yearly Productivity", "Yield, cost per acre, mortality, best/worst blocks"]
   ].map(([name, desc]) => card(`
       <div class="icon-box">${icons.reports}</div>
       <h2 style="margin:12px 0 3px;font-size:18px">${name}</h2>
@@ -981,10 +986,10 @@ function reports() {
     `, "clickable")).join("");
 
   const questions = [
-    "Which zones were irrigated or missed?",
+    "Which blocks were irrigated or missed?",
     "What pest trend needs follow-up?",
     "Which work orders are pending or overdue?",
-    "Which zone is costly compared with yield?",
+    "Which block is costly compared with yield?",
     "What stock is low or has variance?",
     "Which equipment service is due?"
   ].map((item) => `<div class="rule-item">${icons.check}<span>${item}</span></div>`).join("");
@@ -1012,7 +1017,7 @@ function reports() {
         ["Report Type", "text", ["Daily Summary", "Weekly Block Health", "Monthly Cost", "Yearly Productivity"]],
         ["Date From", "date"],
         ["Date To", "date"],
-        ["Zone", "text", ["All Zones", ...zones]],
+        ["Block", "text", ["All Blocks", ...zones]],
         ["Export Format", "text", ["View Dashboard", "Excel", "PDF"]]
       ], "Generate Report")}
     </div>
@@ -1038,17 +1043,17 @@ function reports() {
 
 function users() {
   const roles = [
-    ["Labor / Field Assistant", "Add daily entries only", "Assigned zones only"],
-    ["Field Supervisor", "Add and review entries", "Zone A, Zone B"],
-    ["Farm Manager", "Edit entries, approve work completion", "All zones"],
+    ["Labor / Field Assistant", "Add daily entries only", "Assigned blocks only"],
+    ["Field Supervisor", "Add and review entries", "South Block, North West Block"],
+    ["Farm Manager", "Edit entries, approve work completion", "All blocks"],
     ["Store / Stock Person", "Purchase and issue inventory", "Stock module only"],
-    ["Owner / Admin", "Full access, delete/cancel, reports", "All zones and admin"],
+    ["Owner / Admin", "Full access, delete/cancel, reports", "All blocks and admin"],
     ["Auditor / Consultant", "View-only access", "Reports and records"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   const assignments = [
-    ["Supervisor 1", "Field Supervisor", "Zone A, Zone B", pill("Active", "good")],
-    ["Supervisor 2", "Field Supervisor", "Zone C, Zone D, Zone E", pill("Active", "good")],
+    ["Supervisor 1", "Field Supervisor", "South Block, North West Block", pill("Active", "good")],
+    ["Supervisor 2", "Field Supervisor", "Equipment Yard, East Block", pill("Active", "good")],
     ["Stock Person", "Store / Stock Person", "Inventory only", pill("Limited", "info")],
     ["Consultant", "Auditor / Consultant", "View only", pill("Read only", "violet")]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
@@ -1059,7 +1064,7 @@ function users() {
         <div class="section-head"><h2>Role Access Matrix</h2>${pill("Permission control", "info")}</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Role</th><th>Access</th><th>Zone Scope</th></tr></thead>
+            <thead><tr><th>Role</th><th>Access</th><th>Block Scope</th></tr></thead>
             <tbody>${roles}</tbody>
           </table>
         </div>
@@ -1067,12 +1072,12 @@ function users() {
       ${entryPanel("Assign User Access", [
         ["User", "text", ["Supervisor 1", "Supervisor 2", "Stock Person", "Farm Manager", "Consultant"]],
         ["Role", "text", ["Labor / Field Assistant", "Field Supervisor", "Farm Manager", "Store / Stock Person", "Owner / Admin", "Auditor / Consultant"]],
-        ["Assigned Zones", "text", ["Zone A", "Zone B", "Zone C", "Zone D", "Zone E", "All Zones", "Inventory only"]],
+        ["Assigned Blocks", "text", [...zones, "All Blocks", "Inventory only"]],
         ["Status", "text", ["Active", "Inactive", "Read only"]]
       ], "Save Access")}
     </div>
     ${card(`
-      <div class="section-head"><h2>User Zone Assignment</h2>${pill("Prevents confusion", "good")}</div>
+      <div class="section-head"><h2>User Block Assignment</h2>${pill("Prevents confusion", "good")}</div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>User</th><th>Role</th><th>Assigned Area</th><th>Status</th></tr></thead>
@@ -1145,7 +1150,7 @@ function admin() {
         ["Setup Area", "text", items],
         ["Name", "text", null, "Configuration name"],
         ["Status", "text", ["Active", "Inactive"]],
-        ["Applies To", "text", ["All Zones", ...zones, "Inventory", "Reports"]],
+        ["Applies To", "text", ["All Blocks", ...zones, "Inventory", "Reports"]],
         ["Notes", "text", null, "Optional setup notes"]
       ], "Save Setup")}
     </div>
