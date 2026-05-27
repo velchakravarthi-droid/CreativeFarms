@@ -68,8 +68,8 @@ const pageTitles = {
   admin: "Farm Setup & Admin"
 };
 
-const zones = ["South Block", "North West Block", "Equipment Yard", "East Block"];
-const blocks = ["South Block", "North West Block", "Equipment Yard", "East Block"];
+const zones = ["South Block", "North West Block", "Equipment Yard", "Stock Yard", "East Block"];
+const blocks = ["South Block", "North West Block", "Equipment Yard", "Stock Yard", "East Block"];
 const plots = ["Plot A1", "Plot A2", "Plot B1", "Plot C1", "Plot D1", "Plot E1"];
 const rows = ["Row 1-5", "Row 6-10", "Row 11-15", "Row 16-20", "Full Block"];
 const treeTypes = ["Water Coconut", "Nilembu Timber", "Alphonso Mango", "Teak", "Lemon"];
@@ -119,6 +119,7 @@ const landLayoutBlocks = [
   { name: "South Block", acres: "28", rows: 18, status: "Active", note: "Primary coconut area" },
   { name: "North West Block", acres: "22", rows: 14, status: "Active", note: "Timber and mixed trees" },
   { name: "Equipment Yard", acres: "3", rows: 0, status: "Active", note: "Tractors, JCB, trailers, tanks" },
+  { name: "Stock Yard", acres: "2", rows: 0, status: "Active", note: "Fertilizer, chemicals, spares, and stock storage" },
   { name: "East Block", acres: "35", rows: 24, status: "Active", note: "Irrigation priority area" }
 ];
 
@@ -137,6 +138,10 @@ const landLayoutRows = {
   "Equipment Yard": [
     ["Service lane", "Active"],
     ["Storage row", "Active"]
+  ],
+  "Stock Yard": [
+    ["Input storage lane", "Active"],
+    ["Dispatch lane", "Active"]
   ],
   "East Block": [
     ["Row 1", "Active"],
@@ -520,7 +525,7 @@ function entryForm(type) {
 function structure() {
   const levels = [
     ["Master Farm", "Top-level farm record", "125 acres total"],
-    ["Block", "Custom land area under the farm", "South Block, North West Block, Equipment Yard"],
+    ["Block", "Custom land area under the farm", "South Block, North West Block, Equipment Yard, Stock Yard"],
     ["Rows", "Rows or custom lanes under a block", "Row 1, Row 2, Service lane"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
@@ -603,7 +608,7 @@ function structure() {
         <div class="section-head">
           <div>
             <h2>Master Farm Blocks</h2>
-            <div class="kpi-sub">Create custom blocks like Equipment Yard, South Block, or North West Block.</div>
+            <div class="kpi-sub">Create custom blocks like Equipment Yard, Stock Yard, South Block, or North West Block.</div>
           </div>
           ${pill(`${landLayoutBlocks.length} blocks`, "good")}
         </div>
