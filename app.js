@@ -39,7 +39,7 @@ const navItems = [
   ["equipment", "Equipment"],
   ["workorders", "Work Orders"],
   ["approvals", "Input Approval"],
-  ["costs", "Block Costs"],
+  ["costs", "Farm Costs"],
   ["reports", "Reports"],
   ["users", "Users & Roles"],
   ["sync", "Sync & Backup"],
@@ -61,7 +61,7 @@ const pageTitles = {
   equipment: "Equipment & Utility Tracking",
   workorders: "Work Order Planning",
   approvals: "Input Usage Approval",
-  costs: "Block-wise Cost Center",
+  costs: "Farm Expense Capture",
   reports: "Reports & Analytics",
   users: "Users, Roles, And Block Access",
   sync: "Offline Sync And Cloud Backup",
@@ -85,6 +85,12 @@ const farmProperties = [
 const farmPropertyTypes = [...new Set(farmProperties.map(([type]) => type))];
 const farmPropertyNames = [...new Set(farmProperties.map(([, name]) => name))];
 const treePropertyNames = [...new Set(farmProperties.filter(([type]) => type === "Tree").map(([, name]) => name))];
+const treeTypeAssignments = [
+  ["Tree", "Water Coconut", "All Blocks", "All Rows", "14,500"],
+  ["Tree", "Water Coconut", "South Block", "Row 1-3", "1,265"],
+  ["Tree", "Nilembu Timber", "North West Block", "Row 1-2", "515"],
+  ["Tree", "Alphonso Mango", "East Block", "Row 1-2", "595"]
+];
 const lastIrrigationDates = {
   "South Block|Row 1-5": "May 22, 2026",
   "South Block|Row 6-10": "May 21, 2026",
@@ -114,6 +120,171 @@ let workPlanPanelMode = "add";
 let structureSubmenu = "land";
 let selectedLandBlock = "South Block";
 const workPlanStatuses = ["Open", "In Progress", "Cancelled", "Hold", "Completed"];
+const stockCategories = [
+  {
+    name: "Fertilizers",
+    types: ["Nitrogen", "Phosphorus", "Potassium", "NPK complex", "Micronutrient", "Organic manure", "Bio fertilizer"],
+    examples: ["Urea", "DAP", "MOP / Potassium Chloride", "19-19-19", "12-32-16", "Zinc Sulphate", "Compost"]
+  },
+  {
+    name: "Crop Protection",
+    types: ["Insecticide", "Fungicide", "Herbicide", "Bio pesticide", "Adjuvant"],
+    examples: ["Neem oil", "Copper oxychloride", "Glyphosate", "Sticker spreader"]
+  },
+  {
+    name: "Fuel & Utilities",
+    types: ["Diesel", "Petrol", "Engine oil", "Lubricant", "Electricity credit"],
+    examples: ["Diesel", "2T oil", "Grease", "Bore motor oil"]
+  },
+  {
+    name: "Seeds & Planting",
+    types: ["Seed", "Sapling", "Graft", "Nursery media", "Plant support"],
+    examples: ["Coconut sapling", "Mango graft", "Vegetable seed", "Cocopeat"]
+  },
+  {
+    name: "Irrigation & Spares",
+    types: ["Drip line", "Emitter", "Valve", "Filter", "Pipe", "Pump spare"],
+    examples: ["16 mm lateral", "Emitter", "PVC valve", "Sand filter media"]
+  },
+  {
+    name: "Tools, Packaging & Consumables",
+    types: ["Hand tool", "Safety item", "Packaging", "Harvest crate", "General consumable"],
+    examples: ["Pruning saw", "Gloves", "Crates", "Jute bag", "Twine"]
+  }
+];
+
+const stockItemMaster = [
+  {
+    code: "FERT-UREA",
+    category: "Fertilizers",
+    type: "Nitrogen",
+    item: "Urea",
+    unit: "kg",
+    reorderLevel: 300,
+    preferredSupplier: "Agro Inputs Co-op",
+    storageRule: "Keep dry, sealed bags, away from pesticides"
+  },
+  {
+    code: "FERT-MOP",
+    category: "Fertilizers",
+    type: "Potassium",
+    item: "MOP / Potassium Chloride",
+    unit: "kg",
+    reorderLevel: 180,
+    preferredSupplier: "Krishi Depot",
+    storageRule: "Dry raised pallet storage"
+  },
+  {
+    code: "FERT-NPK191919",
+    category: "Fertilizers",
+    type: "NPK complex",
+    item: "19-19-19",
+    unit: "kg",
+    reorderLevel: 250,
+    preferredSupplier: "Agro Inputs Co-op",
+    storageRule: "Keep away from moisture"
+  },
+  {
+    code: "CHEM-NEEM",
+    category: "Crop Protection",
+    type: "Bio pesticide",
+    item: "Neem oil",
+    unit: "L",
+    reorderLevel: 40,
+    preferredSupplier: "Green Shield",
+    storageRule: "Cool storage, sealed container"
+  },
+  {
+    code: "FUEL-DIESEL",
+    category: "Fuel & Utilities",
+    type: "Diesel",
+    item: "Diesel",
+    unit: "L",
+    reorderLevel: 120,
+    preferredSupplier: "Local fuel station",
+    storageRule: "Locked fuel store with issue register"
+  },
+  {
+    code: "IRR-EMITTER",
+    category: "Irrigation & Spares",
+    type: "Emitter",
+    item: "4 LPH drip emitter",
+    unit: "pieces",
+    reorderLevel: 500,
+    preferredSupplier: "Irrigation Dealer",
+    storageRule: "Bin labelled by size"
+  }
+];
+
+const stockLots = [
+  {
+    lot: "LOT-2405-U01",
+    itemCode: "FERT-UREA",
+    batchNo: "UR-8821",
+    location: "Stock Yard / Fertilizer Room",
+    receivedDate: "2026-05-12",
+    expiryDate: "2027-05-12",
+    openingQty: 1000,
+    availableQty: 420,
+    unitRate: 26.5,
+    status: "Healthy"
+  },
+  {
+    lot: "LOT-2405-MOP",
+    itemCode: "FERT-MOP",
+    batchNo: "MOP-731",
+    location: "Stock Yard / Fertilizer Room",
+    receivedDate: "2026-05-16",
+    expiryDate: "2027-05-16",
+    openingQty: 400,
+    availableQty: 165,
+    unitRate: 38,
+    status: "Low"
+  },
+  {
+    lot: "LOT-2404-1919",
+    itemCode: "FERT-NPK191919",
+    batchNo: "NPK-4430",
+    location: "Stock Yard / Fertilizer Room",
+    receivedDate: "2026-04-20",
+    expiryDate: "2026-10-20",
+    openingQty: 500,
+    availableQty: 48,
+    unitRate: 72,
+    status: "Reorder"
+  },
+  {
+    lot: "LOT-2405-NEEM",
+    itemCode: "CHEM-NEEM",
+    batchNo: "NO-271",
+    location: "Chemical Cabinet",
+    receivedDate: "2026-05-08",
+    expiryDate: "2026-11-30",
+    openingQty: 80,
+    availableQty: 36,
+    unitRate: 420,
+    status: "Low"
+  },
+  {
+    lot: "LOT-2405-DIE",
+    itemCode: "FUEL-DIESEL",
+    batchNo: "DIE-DAILY",
+    location: "Fuel Store",
+    receivedDate: "2026-05-24",
+    expiryDate: "-",
+    openingQty: 300,
+    availableQty: 210,
+    unitRate: 92,
+    status: "Healthy"
+  }
+];
+
+const stockMovements = [
+  ["May 24", "Purchase", "Urea", "Agro Inputs Co-op", "+1000 kg", "Invoice INV-442"],
+  ["May 24", "Issue", "19-19-19", "South Block fertigation", "-125 kg", "Approved plan UP-2201"],
+  ["May 25", "Issue", "Neem oil", "East Block pest spray", "-18 L", "Worker confirmation pending"],
+  ["May 26", "Adjustment", "MOP / Potassium Chloride", "Physical count variance", "-5 kg", "Manager approved"]
+];
 
 const landLayoutBlocks = [
   { name: "South Block", acres: "28", rows: 18, status: "Active", note: "Primary coconut area" },
@@ -199,6 +370,32 @@ function statusPill(status) {
 
 function card(content, extra = "") {
   return `<article class="card ${extra}">${content}</article>`;
+}
+
+function numericCount(value) {
+  return Number(String(value).replace(/,/g, "")) || 0;
+}
+
+function formattedCount(value) {
+  return value.toLocaleString("en-US");
+}
+
+function totalTreeAssignmentCount() {
+  const overallRows = treeTypeAssignments.filter(([, , block, rows]) => block === "All Blocks" && rows === "All Rows");
+  const rowsToTotal = overallRows.length ? overallRows : treeTypeAssignments;
+  return rowsToTotal.reduce((total, row) => total + numericCount(row[4]), 0);
+}
+
+function totalFarmPropertyCount() {
+  return farmProperties.reduce((total, [, , count]) => total + (count ? numericCount(count) : 1), 0);
+}
+
+function farmPropertySummary() {
+  const typeCounts = farmProperties.reduce((summary, [type]) => {
+    summary[type] = (summary[type] || 0) + 1;
+    return summary;
+  }, {});
+  return Object.entries(typeCounts).map(([type, count]) => `${count} ${type}`).join(", ");
 }
 
 function field(label, type = "text", options = null, placeholder = "Enter value") {
@@ -313,10 +510,12 @@ function setActive(route) {
 }
 
 function dashboard() {
+  const activeTreeCount = totalTreeAssignmentCount();
+  const assignedTreeNames = [...new Set(treeTypeAssignments.map(([, name]) => name))].join(", ");
+  const farmPropertyCount = totalFarmPropertyCount();
   const kpis = [
-    ["Active Trees", "18,420", "Water Coconut, Nilembu Timber, Mango", "good"],
-    ["Farm Properties", "14", "Tractors, JCB, tanks, trailers", "info"],
-    ["Blocks / Plots", "5 / 17", "Farm -> Block -> Plot -> Rows", "violet"],
+    ["Active Trees", formattedCount(activeTreeCount), assignedTreeNames, "good"],
+    ["Farm Properties", formattedCount(farmPropertyCount), farmPropertySummary(), "info"],
     ["Today Labor Cost", "Rs 18,600", "32 workers", "info"],
     ["Fertilizer Stock", "Low", "19-19-19 below limit", "warn"],
     ["Pest Alerts", "3 Open", "1 high severity", "bad"],
@@ -449,17 +648,21 @@ function entryForm(type) {
     irrigation: ["Add Irrigation Entry", ["Water Source", "Motor Used", "Start Time", "End Time", "Drip Condition"]],
     fertigation: ["Add Fertigation Entry", ["Fertilizer Type", "Fertilizer Name", "Quantity Used", "Unit", "Application Method"]],
     pest: ["Add Pest / Disease Observation", ["Tree Type", "Name", "Pest / Disease", "Severity", "Affected Tree Count", "Follow-up Date"]],
-    labor: ["Add Labor Activity", ["Worker Name", "Worker Type", "Activity Performed", "Work Hours", "Daily Cost"]],
-    stock: ["Add Stock Transaction", ["Transaction Type", "Item Category", "Item Name", "Quantity", "Cost"]],
+    labor: ["Add Labor Activity", ["Worker Name", "Worker Type", "Activity Performed", "Work Hours"]],
+    stock: ["Add Stock Transaction", ["Item Category", "Item Name", "Quantity", "Cost"]],
     harvest: ["Add Harvest Batch", ["Batch Code", "Crop Family", "Crop Type", "Quantity Kg", "Labor Cost", "Transport Cost", "Buyer"]],
-    equipment: ["Add Equipment Activity", ["Equipment Type", "Activity", "Running Hours", "Service Type", "Maintenance Cost"]]
+    equipment: ["Add Equipment Activity", ["Equipment Type", "Activity", "Running Hours"]]
   };
 
   const [title, fields] = configs[type];
   const blockOptions = landLayoutBlocks.map((block) => block.name);
   const rowOptions = rows;
   const extraFields = fields.map((name, index) => {
-    const options = name.includes("Severity")
+    const options = type === "equipment" && name === "Equipment Type"
+      ? farmProperties.filter(([propertyType]) => propertyType === "Equipment").map(([, name]) => name)
+      : type === "equipment" && name === "Activity"
+        ? ["Running", "Fuel refill", "Cleaning", "Minor repair", "Inspection", "Idle"]
+      : name.includes("Severity")
       ? ["Low", "Medium", "High"]
       : name === "Tree Type"
         ? ["Tree"]
@@ -479,11 +682,13 @@ function entryForm(type) {
   ].map((rule) => `<div class="rule-item">${icons.check}<span>${rule}</span></div>`).join("");
 
   const usesBlockLocation = ["irrigation", "fertigation", "pest"].includes(type);
-  const locationFields = type === "irrigation" || type === "fertigation"
-    ? `${selectField("Block", `${type}-zone`, blockOptions)}${selectField("Row / Row Range", `${type}-row`, rowOptions)}`
-    : usesBlockLocation
-      ? `${field("Block", "text", blockOptions)}${field("Row / Row Range", "text", rowOptions)}`
-      : `${field("Block", "text", zones)}${field("Row / Row Range", "text", rows)}`;
+  const locationFields = type === "stock" || type === "equipment"
+    ? ""
+    : type === "irrigation" || type === "fertigation"
+      ? `${selectField("Block", `${type}-zone`, blockOptions)}${selectField("Row / Row Range", `${type}-row`, rowOptions)}`
+      : usesBlockLocation
+        ? `${field("Block", "text", blockOptions)}${field("Row / Row Range", "text", rowOptions)}`
+        : `${field("Block", "text", zones)}${field("Row / Row Range", "text", rows)}`;
 
   const detailPanel = type === "irrigation" || type === "fertigation"
     ? `
@@ -517,6 +722,83 @@ function entryForm(type) {
       `)}
       ${card(`
         ${detailPanel}
+      `)}
+    </div>
+  `;
+}
+
+function stockMaintenance() {
+  const itemByCode = Object.fromEntries(stockItemMaster.map((item) => [item.code, item]));
+  const lowLots = stockLots.filter((lot) => {
+    const item = itemByCode[lot.itemCode];
+    return item && lot.availableQty <= item.reorderLevel;
+  });
+  const totalItems = stockItemMaster.length;
+  const fertilizerTypes = stockItemMaster
+    .filter((item) => item.category === "Fertilizers")
+    .map((item) => item.type);
+
+  const lotRows = stockLots.map((lot) => {
+    const item = itemByCode[lot.itemCode];
+    const tone = lot.status === "Reorder" ? "bad" : lot.status === "Low" ? "warn" : "good";
+    return `
+      <tr>
+        <td><strong>${item.item}</strong><div class="table-sub">${item.category} / ${item.type}</div></td>
+        <td>${lot.availableQty} ${item.unit}</td>
+        <td>${lot.location}</td>
+        <td>${pill(lot.status, tone)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="stock-simple-layout">
+      ${card(`
+        <div class="section-head"><h2>Current Stock</h2>${pill(`${lowLots.length} low`, lowLots.length ? "warn" : "good")}</div>
+        <div class="table-wrap">
+          <table class="stock-compact-table">
+            <thead><tr><th>Item</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
+            <tbody>${lotRows}</tbody>
+          </table>
+        </div>
+      `)}
+
+      ${card(`
+        <div class="section-head"><h2>Add Stock</h2>${pill("Purchase", "good")}</div>
+        <div class="grid grid-2">
+          ${field("Category", "text", stockCategories.map((category) => category.name))}
+          ${field("Type", "text", stockCategories.flatMap((category) => category.types))}
+          ${field("Item Name", "text", stockItemMaster.map((item) => item.item))}
+          ${field("Quantity", "number", null, "Quantity")}
+          ${field("Unit", "text", ["kg", "L", "pieces", "bags", "crates", "meters"])}
+          ${field("Location", "text", ["Stock Yard / Fertilizer Room", "Chemical Cabinet", "Fuel Store", "Irrigation Spare Bin", "Tool Room"])}
+        </div>
+        <div class="form-actions"><button class="button primary">${icons.save} Save Stock</button></div>
+      `)}
+    </div>
+
+    <div class="stock-simple-layout stock-layout">
+      ${card(`
+        <div class="section-head"><h2>Use / Adjust Stock</h2>${pill("Issue", "warn")}</div>
+        <div class="grid grid-2">
+          ${field("Action", "text", ["Issue to field", "Return from field", "Adjustment"])}
+          ${field("Item", "text", stockItemMaster.map((item) => item.item))}
+          ${field("Quantity", "number", null, "Quantity")}
+          ${field("Block / Use", "text", ["Fertigation", "Pest spray", "Irrigation repair", "Equipment service", ...zones])}
+        </div>
+        <div class="form-actions"><button class="button primary">${icons.save} Save Use</button></div>
+      `)}
+
+      ${card(`
+        <div class="section-head"><h2>Item Setup</h2>${pill(`${totalItems} items`, "info")}</div>
+        <div class="grid grid-2">
+          ${field("New Item Category", "text", stockCategories.map((category) => category.name))}
+          ${field("New Item Type", "text", stockCategories.flatMap((category) => category.types))}
+          ${field("Item Name", "text", null, "Urea, Potassium, Neem oil")}
+          ${field("Minimum Stock", "number", null, "Reorder level")}
+        </div>
+        <div class="form-actions"><button class="button primary">${icons.save} Save Item</button></div>
+        <div class="kpi-sub stock-note">Fertilizer examples: ${[...new Set(fertilizerTypes)].join(", ")}.</div>
       `)}
     </div>
   `;
@@ -563,12 +845,9 @@ function structure() {
     .map((row) => `<tr>${row.map((cell) => `<td>${cell || "-"}</td>`).join("")}<td><button class="mini-button">Remove</button></td></tr>`)
     .join("");
 
-  const treeRows = [
-    ["Tree", "Water Coconut", "All Blocks", "All Rows", "14,500"],
-    ["Tree", "Water Coconut", "South Block", "Row 1-3", "1,265"],
-    ["Tree", "Nilembu Timber", "North West Block", "Row 1-2", "515"],
-    ["Tree", "Alphonso Mango", "East Block", "Row 1-2", "595"]
-  ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
+  const treeRows = treeTypeAssignments
+    .map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`)
+    .join("");
 
   const selectedBlock = landLayoutBlocks.find((block) => block.name === selectedLandBlock) || landLayoutBlocks[0];
   const blockCards = landLayoutBlocks.map((block) => `
@@ -942,39 +1221,90 @@ function approvals() {
 }
 
 function costs() {
-  const rowsHtml = [
-    ["South Block", "Rs 1,240", "Rs 820", "18.5 hrs", "3.8 tons", pill("Profitable", "good")],
-    ["North West Block", "Rs 1,410", "Rs 760", "21.0 hrs", "3.4 tons", pill("Review", "warn")],
-    ["Equipment Yard", "Rs 1,180", "Rs 910", "24.3 hrs", "3.1 tons", pill("Water cost", "warn")],
-    ["East Block", "Rs 1,620", "Rs 740", "17.2 hrs", "2.9 tons", pill("Labor high", "bad")]
-  ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
+  const expenseCategories = [
+    "Labor salary",
+    "Labor bonus / advance",
+    "Stock purchase",
+    "Fertilizer / chemical use",
+    "Irrigation utility",
+    "Equipment fuel",
+    "Equipment repair",
+    "Drip / field repair",
+    "Harvest packing / transport",
+    "Tree replacement",
+    "Admin / office",
+    "Miscellaneous"
+  ];
+  const linkedActivities = [
+    "Today's Work",
+    "Work Plan",
+    "Irrigation",
+    "Fertigation",
+    "Pest / Disease",
+    "Tree Issues",
+    "Labor",
+    "Stock",
+    "Harvest",
+    "Equipment",
+    "Work Orders",
+    "Input Approval",
+    "Admin"
+  ];
+  const recentExpenses = [
+    ["May 26", "Labor salary", "East Block weeding", "Rs 18,600", pill("Paid", "good")],
+    ["May 25", "Stock purchase", "Urea and 19-19-19", "Rs 42,800", pill("Recorded", "info")],
+    ["May 25", "Equipment repair", "Tractor hydraulic hose", "Rs 6,400", pill("Due", "warn")],
+    ["May 24", "Harvest transport", "South Block mango load", "Rs 3,200", pill("Paid", "good")],
+    ["May 24", "Miscellaneous", "Supervisor phone recharge", "Rs 500", pill("Review", "violet")]
+  ].map(([date, type, forText, amount, status]) => `
+    <tr>
+      <td>${date}</td>
+      <td><strong>${type}</strong><div class="table-sub">${forText}</div></td>
+      <td>${amount}</td>
+      <td>${status}</td>
+    </tr>
+  `).join("");
+
+  const costTypeGuide = [
+    ["Labor", "salary, daily wage, overtime, bonus, advance"],
+    ["Stock", "fertilizer, pesticide, diesel, tools, packing material"],
+    ["Field work", "irrigation, fertigation, pest spray, repairs, tree replacement"],
+    ["Equipment", "fuel, service, repair, spare parts, rental"],
+    ["Harvest", "labor, crates, loading, transport, buyer delivery"],
+    ["General", "admin, office, consultant, miscellaneous"]
+  ].map(([type, examples]) => `<div class="rule-item">${icons.check}<span><strong>${type}</strong><br>${examples}</span></div>`).join("");
 
   return `
-    <div class="grid grid-4">
-      ${card(`<div class="kpi-label">Cost / Acre</div><div class="kpi-value">Rs 4,820</div><div class="kpi-sub">Month to date</div>`)}
-      ${card(`<div class="kpi-label">Labor / Acre</div><div class="kpi-value">Rs 1,360</div><div class="kpi-sub">32 workers average</div>`)}
-      ${card(`<div class="kpi-label">Harvest Cost / Kg</div><div class="kpi-value">Rs 6.80</div><div class="kpi-sub">Latest harvest batch</div>`)}
-      ${card(`<div class="kpi-label">Maintenance / Equipment</div><div class="kpi-value">Rs 9,400</div><div class="kpi-sub">Monthly average</div>`)}
-    </div>
     <div class="form-layout" style="margin-top:14px">
       ${card(`
-        <div class="section-head"><h2>Block-wise Cost Center</h2>${pill("Compare profitability", "info")}</div>
+        <div class="section-head"><h2>Recent Expenses</h2>${pill("This week", "info")}</div>
         <div class="table-wrap">
-          <table>
-            <thead><tr><th>Block</th><th>Labor / Acre</th><th>Fertilizer / Acre</th><th>Irrigation Hours</th><th>Yield Estimate</th><th>Signal</th></tr></thead>
-            <tbody>${rowsHtml}</tbody>
+          <table class="stock-compact-table">
+            <thead><tr><th>Date</th><th>Expense</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody>${recentExpenses}</tbody>
           </table>
         </div>
       `)}
-      ${entryPanel("Add Block Cost", [
-        ["Date", "date"],
-        ["Block", "text", zones],
-        ["Cost Category", "text", ["Labor", "Fertilizer", "Chemical", "Drip repair", "Tractor work", "Utility", "Transport"]],
-        ["Amount", "number", null, "Cost amount"],
-        ["Linked Activity", "text", ["Irrigation", "Fertigation", "Pest", "Labor", "Harvest", "Equipment"]],
-        ["Paid By", "text", ["Cash", "Bank", "Credit", "Not paid"]]
-      ], "Save Cost")}
-      </div>
+      ${card(`
+        <div class="section-head"><h2>Add Expense</h2>${pill("Standard entry", "good")}</div>
+        <div class="grid cost-entry-grid">
+          ${field("Date", "date")}
+          ${field("Cost Type", "text", expenseCategories)}
+          ${field("Linked Module", "text", linkedActivities)}
+          ${field("Block / Area", "text", ["General farm", ...zones, "All Blocks", "Not block specific"])}
+          ${field("Expense For", "text", null, "Worker, item, repair, bill, or work")}
+          ${field("Amount", "number", null, "Cost amount")}
+          ${field("Paid By", "text", ["Cash", "Bank", "UPI", "Credit", "Not paid"])}
+          ${field("Payment Status", "text", ["Paid", "Due", "Advance", "Part paid"])}
+          <label class="field"><span>Notes</span><textarea placeholder="Optional reason, bill number, vendor, or approval note"></textarea></label>
+        </div>
+        <div class="form-actions"><button class="button primary">${icons.save} Save Expense</button></div>
+      `)}
+    </div>
+    ${card(`
+      <div class="section-head"><h2>Cost Types Covered</h2>${pill("Based on app modules", "violet")}</div>
+      <div class="grid grid-3">${costTypeGuide}</div>
+    `)}
   `;
 }
 
@@ -1137,28 +1467,52 @@ function syncBackup() {
 }
 
 function admin() {
-  const items = ["Farm Setup", "Block Setup", "Plot Setup", "Row Setup", "Tree Type Setup", "Farm Property Setup", "Worker Setup", "Equipment Setup", "Fertilizer Setup", "User Roles", "Audit Log"];
+  const roleRows = [
+    ["Admin", "All sections", "Add workers, add, update, delete, approve, review dashboard, review reports", pill("Full access", "good")],
+    ["Manager", "Farm structure, daily entries, stock, harvest", "Add entry, configure farm structure, add stocks, update harvest; cannot add workers", pill("Operations", "info")],
+    ["User", "Assigned work sections", "Add assigned entries only; no worker setup, delete, approve, admin, or reports", pill("Limited", "warn")]
+  ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
+
+  const workerRows = [
+    ["Farm Owner", "Admin", "All sections", pill("Active", "good")],
+    ["Farm Manager", "Manager", "Structure, stock, harvest, entries", pill("Active", "good")],
+    ["Supervisor 1", "User", "South Block entries", pill("Active", "good")],
+    ["Stock Person", "Manager", "Stock and input issue", pill("Active", "info")]
+  ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
+
   return `
     <div class="form-layout">
       ${card(`
-        <div class="section-head"><h2>Admin Configuration</h2>${pill("Setup modules", "info")}</div>
-        <div class="grid grid-2">
-          ${items.map((item) => `
-            <div class="report-metric">
-              <span class="small-label">${item}</span>
-              <strong>Configure</strong>
-            </div>
-          `).join("")}
+        <div class="section-head"><h2>Workers & Roles</h2>${pill("Access control", "info")}</div>
+        <div class="table-wrap">
+          <table class="stock-compact-table">
+            <thead><tr><th>Worker</th><th>Role</th><th>Access Area</th><th>Status</th></tr></thead>
+            <tbody>${workerRows}</tbody>
+          </table>
         </div>
       `)}
-      ${entryPanel("Edit Setup Item", [
-        ["Setup Area", "text", items],
-        ["Name", "text", null, "Configuration name"],
-        ["Status", "text", ["Active", "Inactive"]],
-        ["Applies To", "text", ["All Blocks", ...zones, "Inventory", "Reports"]],
-        ["Notes", "text", null, "Optional setup notes"]
-      ], "Save Setup")}
+      ${card(`
+        <div class="section-head"><h2>Add Worker</h2>${pill("Admin only", "warn")}</div>
+        <div class="grid">
+          ${field("Worker Name", "text", null, "Worker name")}
+          ${field("Mobile Number", "text", null, "Phone number")}
+          ${field("Role", "text", ["Admin", "Manager", "User"])}
+          ${field("Assigned Area", "text", ["All sections", "All Blocks", ...zones, "Stock only", "Harvest only", "Daily entries only"])}
+          ${field("Status", "text", ["Active", "Inactive"])}
+        </div>
+        <div class="kpi-sub stock-note">Only a worker with Admin role can create or update worker access.</div>
+        <div class="form-actions"><button class="button primary">${icons.save} Save Worker</button></div>
+      `)}
     </div>
+    ${card(`
+      <div class="section-head"><h2>Role Permissions</h2>${pill("Standard roles", "violet")}</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Role</th><th>Sections</th><th>Allowed Actions</th><th>Level</th></tr></thead>
+          <tbody>${roleRows}</tbody>
+        </table>
+      </div>
+    `)}
   `;
 }
 
@@ -1168,7 +1522,8 @@ function renderContent() {
   else if (active === "today") content.innerHTML = today();
   else if (active === "planning") content.innerHTML = planning();
   else if (active === "structure") content.innerHTML = structure();
-  else if (["irrigation", "fertigation", "pest", "labor", "stock", "harvest", "equipment"].includes(active)) content.innerHTML = entryForm(active);
+  else if (active === "stock") content.innerHTML = stockMaintenance();
+  else if (["irrigation", "fertigation", "pest", "labor", "harvest", "equipment"].includes(active)) content.innerHTML = entryForm(active);
   else if (active === "exceptions") content.innerHTML = exceptions();
   else if (active === "workorders") content.innerHTML = workOrders();
   else if (active === "approvals") content.innerHTML = approvals();
