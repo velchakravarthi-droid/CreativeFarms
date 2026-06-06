@@ -120,6 +120,17 @@ let workPlanPanelMode = "add";
 let structureSubmenu = "land";
 let selectedLandBlock = "South Block";
 const workPlanStatuses = ["Open", "In Progress", "Cancelled", "Hold", "Completed"];
+const workerRoleMaster = [
+  { name: "Farm Owner", role: "Admin", accessArea: "All sections", status: "Active" },
+  { name: "Farm Manager", role: "Manager", accessArea: "Structure, stock, harvest, entries", status: "Active" },
+  { name: "Supervisor 1", role: "User", accessArea: "South Block entries", status: "Active" },
+  { name: "Supervisor 2", role: "User", accessArea: "East Block entries", status: "Active" },
+  { name: "Stock Person", role: "Manager", accessArea: "Stock and input issue", status: "Active" },
+  { name: "Ramesh", role: "User", accessArea: "Repair work entries", status: "Active" },
+  { name: "Team 1", role: "User", accessArea: "Daily labor entries", status: "Active" }
+];
+const workerRoleOptions = ["Admin", "Manager", "User"];
+const workerNameOptions = workerRoleMaster.map((worker) => worker.name);
 const stockCategories = [
   {
     name: "Fertilizers",
@@ -327,8 +338,8 @@ const workPlanActivities = {
     ["10:30 AM", "Drip repair", "North West Block rows 8-12", "Ramesh", "Completed", "May 22, 2026", "Supervisor 1"]
   ],
   "2026-05-23": [
-    ["7:00 AM", "Fertigation", "North West Block full block", "Stock person", "Completed", "May 23, 2026", "Stock person"],
-    ["2:30 PM", "Equipment service", "Tractor 2", "Mechanic", "Open", "-", "-"]
+    ["7:00 AM", "Fertigation", "North West Block full block", "Stock Person", "Completed", "May 23, 2026", "Stock Person"],
+    ["2:30 PM", "Equipment service", "Tractor", "Ramesh", "Open", "-", "-"]
   ],
   "2026-05-24": [
     ["6:00 AM", "Irrigation", "South Block rows 1-20", "Bore Motor 2", "Completed", "May 24, 2026", "Farm Manager"],
@@ -336,7 +347,7 @@ const workPlanActivities = {
     ["2:00 PM", "Pest treatment", "East Block row 12", "Supervisor 2", "Open", "-", "-"]
   ],
   "2026-05-25": [
-    ["6:30 AM", "Fertigation", "South Block full block", "Stock person", "Open", "-", "-"],
+    ["6:30 AM", "Fertigation", "South Block full block", "Stock Person", "Open", "-", "-"],
     ["11:00 AM", "Drip repair", "North West Block rows 10-15", "Ramesh", "Hold", "May 25, 2026", "Farm Manager"],
     ["3:00 PM", "Harvest prep", "South Block rows 1-8", "Supervisor 1", "Open", "-", "-"]
   ],
@@ -345,8 +356,8 @@ const workPlanActivities = {
     ["1:00 PM", "Pest observation", "East Block rows 10-14", "Supervisor 2", "Open", "-", "-"]
   ],
   "2026-05-27": [
-    ["8:00 AM", "Labor", "North West Block pruning", "Team 2", "Open", "-", "-"],
-    ["4:00 PM", "Stock check", "Fertilizer store", "Stock person", "Open", "-", "-"]
+    ["8:00 AM", "Labor", "North West Block pruning", "Team 1", "Open", "-", "-"],
+    ["4:00 PM", "Stock check", "Fertilizer store", "Stock Person", "Open", "-", "-"]
   ]
 };
 
@@ -396,6 +407,22 @@ function farmPropertySummary() {
     return summary;
   }, {});
   return Object.entries(typeCounts).map(([type, count]) => `${count} ${type}`).join(", ");
+}
+
+function blockNameOptions() {
+  return landLayoutBlocks.map((block) => block.name);
+}
+
+function rowNameOptions() {
+  return [...new Set([...rows, ...Object.values(landLayoutRows).flat().map(([row]) => row)])];
+}
+
+function stockItemsByCategory(category) {
+  return stockItemMaster.filter((item) => item.category === category).map((item) => item.item);
+}
+
+function farmPropertyNamesByType(type) {
+  return farmProperties.filter(([propertyType]) => propertyType === type).map(([, name]) => name);
 }
 
 function field(label, type = "text", options = null, placeholder = "Enter value") {
@@ -655,11 +682,35 @@ function entryForm(type) {
   };
 
   const [title, fields] = configs[type];
-  const blockOptions = landLayoutBlocks.map((block) => block.name);
-  const rowOptions = rows;
+  const blockOptions = blockNameOptions();
+  const rowOptions = rowNameOptions();
   const extraFields = fields.map((name, index) => {
-    const options = type === "equipment" && name === "Equipment Type"
-      ? farmProperties.filter(([propertyType]) => propertyType === "Equipment").map(([, name]) => name)
+    const options = type === "labor" && name === "Worker Name"
+      ? workerNameOptions
+      : type === "labor" && name === "Worker Type"
+        ? workerRoleOptions
+      : type === "irrigation" && name === "Water Source"
+        ? ["Bore Motor 1", "Bore Motor 2", "Open Well", "Farm Pond", "Water Tank"]
+      : type === "irrigation" && name === "Motor Used"
+        ? farmPropertyNamesByType("Equipment").filter((name) => name.includes("Tank") || name.includes("Tractor")).concat(["Bore Motor 1", "Bore Motor 2", "Diesel Pump"])
+      : type === "irrigation" && name === "Drip Condition"
+        ? ["Good", "Leak found", "Emitter blocked", "Valve issue", "Needs repair"]
+      : type === "fertigation" && name === "Fertilizer Type"
+        ? stockCategories.find((category) => category.name === "Fertilizers").types
+      : type === "fertigation" && name === "Fertilizer Name"
+        ? stockItemsByCategory("Fertilizers")
+      : type === "fertigation" && name === "Application Method"
+        ? ["Drip fertigation", "Soil application", "Foliar spray", "Manual basin application"]
+      : type === "pest" && name === "Pest / Disease"
+        ? ["Red palm weevil", "Leaf spot", "Stem borer", "Root rot", "Aphid", "Unknown observation"]
+      : type === "harvest" && name === "Crop Family"
+        ? ["Tree crop", "Vegetable", "Nursery", "Timber"]
+      : type === "harvest" && name === "Crop Type"
+        ? treePropertyNames
+      : type === "harvest" && name === "Buyer"
+        ? ["Local market", "Direct buyer", "Processor", "Farm use", "Storage"]
+      : type === "equipment" && name === "Equipment Type"
+      ? farmPropertyNamesByType("Equipment")
       : type === "equipment" && name === "Activity"
         ? ["Running", "Fuel refill", "Cleaning", "Minor repair", "Inspection", "Idle"]
       : name.includes("Severity")
@@ -669,7 +720,7 @@ function entryForm(type) {
       : name === "Name"
         ? treePropertyNames
       : name.includes("Type") || name.includes("Method") || name.includes("Source")
-        ? ["Select", "Option 1", "Option 2", "Option 3"]
+        ? null
         : null;
     return field(name, "text", options, index % 2 === 0 ? "Select or enter value" : "Enter value");
   }).join("");
@@ -688,7 +739,7 @@ function entryForm(type) {
       ? `${selectField("Block", `${type}-zone`, blockOptions)}${selectField("Row / Row Range", `${type}-row`, rowOptions)}`
       : usesBlockLocation
         ? `${field("Block", "text", blockOptions)}${field("Row / Row Range", "text", rowOptions)}`
-        : `${field("Block", "text", zones)}${field("Row / Row Range", "text", rows)}`;
+        : `${field("Block", "text", blockOptions)}${field("Row / Row Range", "text", rowOptions)}`;
 
   const detailPanel = type === "irrigation" || type === "fertigation"
     ? `
@@ -784,7 +835,7 @@ function stockMaintenance() {
           ${field("Action", "text", ["Issue to field", "Return from field", "Adjustment"])}
           ${field("Item", "text", stockItemMaster.map((item) => item.item))}
           ${field("Quantity", "number", null, "Quantity")}
-          ${field("Block / Use", "text", ["Fertigation", "Pest spray", "Irrigation repair", "Equipment service", ...zones])}
+          ${field("Block / Use", "text", ["Fertigation", "Pest spray", "Irrigation repair", "Equipment service", ...blockNameOptions()])}
         </div>
         <div class="form-actions"><button class="button primary">${icons.save} Save Use</button></div>
       `)}
@@ -811,34 +862,36 @@ function structure() {
     ["Rows", "Rows or custom lanes under a block", "Row 1, Row 2, Service lane"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
-  const farmBlockRows = [
-    ["125 Acre Farm", "Block A", "20 acres", "Active"],
-    ["125 Acre Farm", "Block B", "15 acres", "Active"],
-    ["125 Acre Farm", "Block C", "25 acres", "Active"],
-    ["125 Acre Farm", "Block D", "30 acres", "Active"],
-    ["125 Acre Farm", "Block E", "35 acres", "Active"]
-  ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}<td><button class="mini-button">Update</button> <button class="mini-button">Remove</button></td></tr>`).join("");
+  const farmBlockRows = landLayoutBlocks.map((block) => `
+    <tr>
+      <td>125 Acre Farm</td>
+      <td>${block.name}</td>
+      <td>${block.acres} acres</td>
+      <td>${block.status}</td>
+      <td><button class="mini-button">Update</button> <button class="mini-button">Remove</button></td>
+    </tr>
+  `).join("");
 
   const blockPlotRows = [
-    ["Block A", "Plot A1", "5 acres", "Water Coconut"],
-    ["Block A", "Plot A2", "5 acres", "Water Coconut"],
-    ["Block B", "Plot B1", "5 acres", "Nilembu Timber"],
-    ["Block C", "Plot C1", "6 acres", "Alphonso Mango"]
+    ["South Block", "Plot A1", "14 acres", "Water Coconut"],
+    ["South Block", "Plot A2", "14 acres", "Water Coconut"],
+    ["North West Block", "Plot B1", "22 acres", "Nilembu Timber"],
+    ["East Block", "Plot E1", "35 acres", "Alphonso Mango"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}<td><button class="mini-button">Update</button> <button class="mini-button">Remove</button></td></tr>`).join("");
 
   const plotRowRows = [
     ["Plot A1", "Row 1-5", "Water Coconut", "2,100"],
     ["Plot A1", "Row 6-10", "Water Coconut", "2,050"],
-    ["Plot B1", "Row 1-8", "Nilembu Timber", "1,900"],
-    ["Plot C1", "Row 1-12", "Alphonso Mango", "2,450"]
+    ["Plot B1", "Windbreak row", "Nilembu Timber", "1,900"],
+    ["Plot E1", "Row 1-12", "Alphonso Mango", "2,450"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}<td><button class="mini-button">Update</button> <button class="mini-button">Remove</button></td></tr>`).join("");
 
   const blockRows = [
-    ["Block A", "20 acres", "Plot A1-A4", "Rows 1-20", "Water Coconut", "8,400"],
-    ["Block B", "15 acres", "Plot B1-B3", "Rows 1-16", "Nilembu Timber", "4,250"],
-    ["Block C", "25 acres", "Plot C1-C5", "Rows 1-24", "Alphonso Mango", "5,770"],
-    ["Block D", "30 acres", "Plot D1-D6", "Rows 1-30", "Water Coconut", "6,100"],
-    ["Block E", "35 acres", "Plot E1-E7", "Rows 1-34", "Mixed trees", "7,900"]
+    ["South Block", "28 acres", "Plot A1-A2", "Rows 1-18", "Water Coconut", "8,400"],
+    ["North West Block", "22 acres", "Plot B1", "Rows 1-14", "Nilembu Timber", "4,250"],
+    ["East Block", "35 acres", "Plot E1", "Rows 1-24", "Alphonso Mango", "5,770"],
+    ["Stock Yard", "2 acres", "Storage lanes", "Input storage lane", "Inventory", "-"],
+    ["Equipment Yard", "3 acres", "Service lanes", "Service lane", "Equipment", "-"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
   const propertyRows = farmProperties
@@ -1051,7 +1104,7 @@ function planning() {
             </select>
           </label>
           ${dateFieldWithValue("Updated Date", dateValueFromDisplay(selectedActivity[5], selectedWorkPlanDate), "selected-work-updated-date")}
-          ${selectField("Updated By", "selected-work-updated-by", ["Farm Manager", "Supervisor 1", "Supervisor 2", "Stock person", "Owner / Admin"])}
+          ${selectField("Updated By", "selected-work-updated-by", workerNameOptions)}
         </div>
         <div class="form-actions">
           <button class="button primary" data-save-work-status>${icons.save} Save Update</button>
@@ -1065,9 +1118,9 @@ function planning() {
         <div class="grid grid-2">
           ${dateFieldWithValue("Date", selectedWorkPlanDate)}
           ${field("Activity", "text", ["Irrigation", "Labor", "Drip repair", "Pest treatment", "Fertigation", "Harvest", "Equipment service"])}
-          ${field("Block", "text", zones)}
-          ${field("Rows", "text", rows)}
-          ${field("Assigned To", "text", ["Supervisor 1", "Supervisor 2", "Stock person", "Team 1", "Ramesh"])}
+          ${field("Block", "text", blockNameOptions())}
+          ${field("Rows", "text", rowNameOptions())}
+          ${field("Assigned To", "text", workerNameOptions)}
           ${field("Priority", "text", ["Low", "Medium", "High"])}
           ${fieldWithDefault("Status", workPlanStatuses, "Open")}
         </div>
@@ -1128,8 +1181,8 @@ function exceptions() {
       ${card(`
         <div class="section-head"><h2>Add Tree Issue</h2></div>
         <div class="grid">
-          ${field("Block", "text", landLayoutBlocks.map((block) => block.name))}
-          ${field("Row", "text", rows)}
+          ${field("Block", "text", blockNameOptions())}
+          ${field("Row", "text", rowNameOptions())}
           ${field("Tree Number", "number", null, "Tree position number")}
           ${field("Issue Type", "text", ["Fallen tree", "Dead tree / mortality", "Replanting", "Disease affected", "Special observation", "High-value tree"])}
           ${field("Severity", "text", ["Low", "Medium", "High"])}
@@ -1170,9 +1223,9 @@ function workOrders() {
         <div class="section-head"><h2>Create Work Order</h2></div>
         <div class="grid">
           ${field("Work Type", "text", ["Drip repair", "Pest spray", "Fertigation", "Tree replacement", "Harvest prep", "Equipment maintenance", "Weed removal", "Pruning"])}
-          ${field("Block", "text", zones)}
-          ${field("Rows", "text", rows)}
-          ${field("Assigned To", "text", ["Ramesh", "Supervisor 1", "Supervisor 2", "Team 1"])}
+          ${field("Block", "text", blockNameOptions())}
+          ${field("Rows", "text", rowNameOptions())}
+          ${field("Assigned To", "text", workerNameOptions)}
           ${field("Due Date", "date")}
         </div>
         <div class="form-actions"><button class="button primary">${icons.save} Save Work Order</button></div>
@@ -1182,7 +1235,7 @@ function workOrders() {
 }
 
 function approvals() {
-  const flow = ["Manager creates usage plan", "Stock person issues input", "Field worker confirms usage", "System reduces stock"];
+  const flow = ["Manager creates usage plan", "Stock Person issues input", "Field worker confirms usage", "System reduces stock"];
   const approvalsTable = [
     ["UP-2201", "19-19-19", "South Block", "125 kg", "Issue pending", pill("Waiting", "warn")],
     ["UP-2202", "Neem oil", "East Block", "18 L", "Worker confirmation", pill("Issued", "info")],
@@ -1205,11 +1258,11 @@ function approvals() {
       `)}
       ${entryPanel("Create Usage Plan", [
         ["Planned For", "date"],
-        ["Block", "text", zones],
+        ["Block", "text", blockNameOptions()],
         ["Inventory Item", "text", ["19-19-19", "Neem oil", "Urea", "Diesel", "Drip spare part"]],
         ["Planned Quantity", "number", null, "Quantity"],
         ["Unit", "text", ["kg", "L", "pieces"]],
-        ["Issue To", "text", ["Supervisor 1", "Supervisor 2", "Team 1", "Ramesh"]]
+        ["Issue To", "text", workerNameOptions]
       ], "Submit Plan")}
       </div>
     <div class="grid grid-3" style="margin-top:14px">
@@ -1291,7 +1344,7 @@ function costs() {
           ${field("Date", "date")}
           ${field("Cost Type", "text", expenseCategories)}
           ${field("Linked Module", "text", linkedActivities)}
-          ${field("Block / Area", "text", ["General farm", ...zones, "All Blocks", "Not block specific"])}
+          ${field("Block / Area", "text", ["General farm", ...blockNameOptions(), "All Blocks", "Not block specific"])}
           ${field("Expense For", "text", null, "Worker, item, repair, bill, or work")}
           ${field("Amount", "number", null, "Cost amount")}
           ${field("Paid By", "text", ["Cash", "Bank", "UPI", "Credit", "Not paid"])}
@@ -1352,7 +1405,7 @@ function reports() {
         ["Report Type", "text", ["Daily Summary", "Weekly Block Health", "Monthly Cost", "Yearly Productivity"]],
         ["Date From", "date"],
         ["Date To", "date"],
-        ["Block", "text", ["All Blocks", ...zones]],
+        ["Block", "text", ["All Blocks", ...blockNameOptions()]],
         ["Export Format", "text", ["View Dashboard", "Excel", "PDF"]]
       ], "Generate Report")}
     </div>
@@ -1378,20 +1431,19 @@ function reports() {
 
 function users() {
   const roles = [
-    ["Labor / Field Assistant", "Add daily entries only", "Assigned blocks only"],
-    ["Field Supervisor", "Add and review entries", "South Block, North West Block"],
-    ["Farm Manager", "Edit entries, approve work completion", "All blocks"],
-    ["Store / Stock Person", "Purchase and issue inventory", "Stock module only"],
-    ["Owner / Admin", "Full access, delete/cancel, reports", "All blocks and admin"],
-    ["Auditor / Consultant", "View-only access", "Reports and records"]
+    ["Admin", "Add workers, add/update/delete/approve, review dashboard and reports", "All sections"],
+    ["Manager", "Add entries, configure farm structure, add stocks, update harvest", "Assigned operations"],
+    ["User", "Add assigned entries only", "Assigned blocks or work areas"]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
-  const assignments = [
-    ["Supervisor 1", "Field Supervisor", "South Block, North West Block", pill("Active", "good")],
-    ["Supervisor 2", "Field Supervisor", "Equipment Yard, East Block", pill("Active", "good")],
-    ["Stock Person", "Store / Stock Person", "Inventory only", pill("Limited", "info")],
-    ["Consultant", "Auditor / Consultant", "View only", pill("Read only", "violet")]
-  ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
+  const assignments = workerRoleMaster.map((worker) => `
+    <tr>
+      <td>${worker.name}</td>
+      <td>${worker.role}</td>
+      <td>${worker.accessArea}</td>
+      <td>${pill(worker.status, worker.role === "Manager" ? "info" : "good")}</td>
+    </tr>
+  `).join("");
 
   return `
     <div class="form-layout">
@@ -1405,9 +1457,9 @@ function users() {
         </div>
       `)}
       ${entryPanel("Assign User Access", [
-        ["User", "text", ["Supervisor 1", "Supervisor 2", "Stock Person", "Farm Manager", "Consultant"]],
-        ["Role", "text", ["Labor / Field Assistant", "Field Supervisor", "Farm Manager", "Store / Stock Person", "Owner / Admin", "Auditor / Consultant"]],
-        ["Assigned Blocks", "text", [...zones, "All Blocks", "Inventory only"]],
+        ["User", "text", workerNameOptions],
+        ["Role", "text", workerRoleOptions],
+        ["Assigned Blocks", "text", [...blockNameOptions(), "All Blocks", "Stock only", "Harvest only", "Daily entries only"]],
         ["Status", "text", ["Active", "Inactive", "Read only"]]
       ], "Save Access")}
     </div>
@@ -1473,12 +1525,14 @@ function admin() {
     ["User", "Assigned work sections", "Add assigned entries only; no worker setup, delete, approve, admin, or reports", pill("Limited", "warn")]
   ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
-  const workerRows = [
-    ["Farm Owner", "Admin", "All sections", pill("Active", "good")],
-    ["Farm Manager", "Manager", "Structure, stock, harvest, entries", pill("Active", "good")],
-    ["Supervisor 1", "User", "South Block entries", pill("Active", "good")],
-    ["Stock Person", "Manager", "Stock and input issue", pill("Active", "info")]
-  ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
+  const workerRows = workerRoleMaster.map((worker) => `
+    <tr>
+      <td>${worker.name}</td>
+      <td>${worker.role}</td>
+      <td>${worker.accessArea}</td>
+      <td>${pill(worker.status, worker.role === "Manager" ? "info" : "good")}</td>
+    </tr>
+  `).join("");
 
   return `
     <div class="form-layout">
@@ -1496,8 +1550,8 @@ function admin() {
         <div class="grid">
           ${field("Worker Name", "text", null, "Worker name")}
           ${field("Mobile Number", "text", null, "Phone number")}
-          ${field("Role", "text", ["Admin", "Manager", "User"])}
-          ${field("Assigned Area", "text", ["All sections", "All Blocks", ...zones, "Stock only", "Harvest only", "Daily entries only"])}
+          ${field("Role", "text", workerRoleOptions)}
+          ${field("Assigned Area", "text", ["All sections", "All Blocks", ...blockNameOptions(), "Stock only", "Harvest only", "Daily entries only"])}
           ${field("Status", "text", ["Active", "Inactive"])}
         </div>
         <div class="kpi-sub stock-note">Only a worker with Admin role can create or update worker access.</div>
