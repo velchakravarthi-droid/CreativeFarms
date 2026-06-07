@@ -132,6 +132,21 @@ select {
   padding: 18px;
 }
 
+.notice {
+  background: var(--amber-soft);
+  border: 1px solid #f4d27b;
+  border-radius: var(--radius);
+  color: var(--amber);
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.notice span {
+  color: #7c4a03;
+  font-size: 13px;
+}
+
 .kpi-grid,
 .grid-two {
   display: grid;
