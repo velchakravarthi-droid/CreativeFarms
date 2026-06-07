@@ -30,6 +30,14 @@ type InventoryItemRow = {
   status: string;
 };
 
+type SupabaseReadError = {
+  message: string;
+};
+
+function hasSupabaseError(error: SupabaseReadError | null): error is SupabaseReadError {
+  return error !== null;
+}
+
 function Pill({ children, tone = "info" }: { children: ReactNode; tone?: "good" | "warn" | "bad" | "info" }) {
   return <span className={`pill ${tone}`}>{children}</span>;
 }
@@ -128,7 +136,7 @@ async function loadFarmData() {
       ? workerRows
       : workers.map((worker) => ({ name: worker.name, role: worker.role, area: worker.area, status: "Active" })),
     stock: stockRows.length ? stockRows : stockItems,
-    errors: [farmResult.error, blocksResult.error, workersResult.error, stockResult.error].filter(Boolean).map((error) => error.message)
+    errors: [farmResult.error, blocksResult.error, workersResult.error, stockResult.error].filter(hasSupabaseError).map((error) => error.message)
   };
 }
 
