@@ -15,6 +15,33 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 Use the service role key only on the server. Never expose it in browser code.
 
+## Admin Users
+
+Create each Admin in Supabase Authentication first, then add a matching `worker_profiles` row.
+
+```sql
+insert into public.worker_profiles (
+  farm_id,
+  auth_user_id,
+  full_name,
+  phone,
+  role,
+  access_area,
+  status
+)
+values (
+  'YOUR_FARM_ID',
+  'VIGNESH_AUTH_USER_ID',
+  'Vignesh Pandian',
+  null,
+  'admin',
+  'All sections',
+  'active'
+);
+```
+
+Use lowercase `admin` because `role` is a PostgreSQL enum.
+
 ## Vercel
 
 1. Import the GitHub repository into Vercel.

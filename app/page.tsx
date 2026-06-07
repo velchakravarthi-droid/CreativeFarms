@@ -1,5 +1,8 @@
 import { costTypes, farmBlocks, navItems, stockItems, workers } from "@/lib/farm-data";
+import { logout } from "@/app/actions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
@@ -135,6 +138,15 @@ async function loadFarmData() {
 }
 
 export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
   const data = await loadFarmData();
   const workerNames = data.workers.map((worker) => worker.name);
   const roleNames = ["Admin", "Manager", "User"];
@@ -177,6 +189,9 @@ export default async function Home() {
             <Pill tone={data.source === "supabase" ? "good" : "warn"}>
               {data.source === "supabase" ? "Supabase connected" : "Sample fallback"}
             </Pill>
+            <form action={logout}>
+              <button className="button secondary-button">Sign out</button>
+            </form>
           </div>
         </header>
 
