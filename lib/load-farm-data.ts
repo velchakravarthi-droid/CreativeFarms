@@ -38,6 +38,9 @@ type InventoryItemRow = {
 
 type TreeAssignmentRow = {
   id: string;
+  farm_property_id: string;
+  block_id: string | null;
+  row_id: string | null;
   tree_count: number | null;
   row_range: string | null;
   status: string;
@@ -64,7 +67,7 @@ export async function loadFarmData() {
     supabase
       .from("tree_type_assignments")
       .select(
-        "id, tree_count, row_range, status, notes, farm_properties(property_type, name), farm_blocks(name), farm_rows(name)"
+        "id, farm_property_id, block_id, row_id, tree_count, row_range, status, notes, farm_properties(property_type, name), farm_blocks(name), farm_rows(name)"
       )
       .order("created_at", { ascending: false }),
     supabase.from("worker_profiles").select("id, full_name, role, access_area, status").order("full_name"),
@@ -102,6 +105,9 @@ export async function loadFarmData() {
 
     return {
       id: assignment.id,
+      propertyId: assignment.farm_property_id,
+      blockId: assignment.block_id ?? "",
+      rowId: assignment.row_id ?? "",
       propertyType: farmProperty?.property_type ?? "Tree",
       propertyName: farmProperty?.name ?? "Tree",
       block: farmBlock?.name ?? "All Blocks",
@@ -157,11 +163,11 @@ function sampleData(source: "sample" | "supabase") {
       status: "active",
       rowCount: block.rows,
       rows: Array.from({ length: Math.min(block.rows, 6) }, (_, rowIndex) => ({
-      id: `sample-row-${index}-${rowIndex}`,
-      name: `Row ${rowIndex + 1}`,
-      rowNumber: rowIndex + 1,
-      status: "active",
-      notes: ""
+        id: `sample-row-${index}-${rowIndex}`,
+        name: `Row ${rowIndex + 1}`,
+        rowNumber: rowIndex + 1,
+        status: "active",
+        notes: ""
       })),
       notes:
         block.name === "South Block"
@@ -173,12 +179,20 @@ function sampleData(source: "sample" | "supabase") {
               : "Farm support area"
     })),
     properties: farmProperties.map((property, index) => ({ id: `sample-property-${index}`, status: "active", ...property })),
-    treeAssignments: treeTypeAssignments.map((assignment, index) => ({
-      id: `sample-assignment-${index}`,
-      status: "active",
-      notes: "",
-      ...assignment
-    })),
+    treeAssignments: treeTypeAssignments.map((assignment, index) => {
+      const propertyIndex = farmProperties.findIndex((property) => property.name === assignment.propertyName);
+      const blockIndex = farmBlocks.findIndex((block) => block.name === assignment.block);
+
+      return {
+        id: `sample-assignment-${index}`,
+        propertyId: propertyIndex >= 0 ? `sample-property-${propertyIndex}` : "",
+        blockId: blockIndex >= 0 ? `sample-block-${blockIndex}` : "",
+        rowId: "",
+        status: "active",
+        notes: "",
+        ...assignment
+      };
+    }),
     workers: workers.map((worker) => ({
       name: worker.name,
       role: worker.role,

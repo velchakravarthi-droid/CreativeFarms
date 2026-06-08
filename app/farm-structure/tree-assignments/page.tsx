@@ -1,24 +1,22 @@
 import { AppShell } from "@/components/app-shell";
+import { TreeAssignmentMaintenance } from "@/components/tree-assignment-maintenance";
 import { Card, Pill } from "@/components/ui";
-import { FarmStructureMaintenance } from "@/components/farm-structure-maintenance";
 import { getCurrentWorkerRole, requireUser } from "@/lib/auth";
 import { loadFarmData } from "@/lib/load-farm-data";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function FarmStructurePage() {
+export default async function TreeAssignmentsPage() {
   await requireUser();
   const role = await getCurrentWorkerRole();
   const data = await loadFarmData();
-  const totalAcres = data.totalAcres || data.blocks.reduce((total, block) => total + block.acres, 0);
-  const activeProperties = data.properties.filter((property) => property.status.toLowerCase() === "active").length;
   const treeCount = data.treeAssignments.reduce((total, assignment) => total + assignment.count, 0);
 
   return (
     <AppShell
       farmName={data.farmName}
-      subtitle="Maintain farm blocks, rows, property masters, and tree type assignments."
+      subtitle="Assign tree masters to farm blocks and child rows."
       status={data.source === "supabase" ? "Supabase connected" : "Sample fallback"}
       statusTone={data.source === "supabase" ? "good" : "warn"}
     >
@@ -32,32 +30,30 @@ export default async function FarmStructurePage() {
 
         <section className="module-section">
           <div className="module-title">
-            <h2>Farm Structure</h2>
+            <h2>Tree Type Assignment</h2>
           </div>
-
           <div className="subnav">
             <Link href="/farm-structure">Land Structure</Link>
             <Link href="/farm-structure/properties">Farm Property Master</Link>
             <Link href="/farm-structure/tree-assignments">Tree Type Assignment</Link>
           </div>
-
           <div className="kpi-grid">
-            <Card title="Farm Size" action={<Pill tone="good">Master</Pill>}>
-              <strong className="metric">{totalAcres || 125} acres</strong>
-              <p>Master farm is divided into blocks and rows.</p>
-            </Card>
-            <Card title="Primary Unit" action={<Pill>Block / Row</Pill>}>
-              <strong className="metric">{data.blocks.length} blocks</strong>
-              <p>Every activity should point to the right farm block and row when needed.</p>
-            </Card>
-            <Card title="Farm Properties" action={<Pill>{activeProperties} active</Pill>}>
+            <Card title="Assignments" action={<Pill>{data.treeAssignments.length} records</Pill>}>
               <strong className="metric">{treeCount.toLocaleString()}</strong>
-              <p>Tree counts come from tree type assignments.</p>
+              <p>Tree count is maintained by block and row assignment.</p>
+            </Card>
+            <Card title="Farm Blocks" action={<Pill tone="good">Master</Pill>}>
+              <strong className="metric">{data.blocks.length}</strong>
+              <p>Block and row choices come directly from Land Structure.</p>
+            </Card>
+            <Card title="Admin Control" action={<Pill tone={role === "admin" ? "good" : "warn"}>{role ?? "none"}</Pill>}>
+              <strong className="metric">{role === "admin" ? "On" : "Off"}</strong>
+              <p>Only Admin can add, modify, or delete tree assignments.</p>
             </Card>
           </div>
         </section>
 
-        <FarmStructureMaintenance blocks={data.blocks} farmName={data.farmName} isAdmin={role === "admin"} totalAcres={totalAcres} />
+        <TreeAssignmentMaintenance assignments={data.treeAssignments} blocks={data.blocks} isAdmin={role === "admin"} properties={data.properties} />
       </div>
     </AppShell>
   );

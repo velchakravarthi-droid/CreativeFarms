@@ -207,6 +207,12 @@ select {
   grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
 }
 
+.master-detail-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.85fr);
+}
+
 .master-farm-band {
   align-items: center;
   background: #f8fafc;
@@ -553,7 +559,8 @@ select {
 
   .kpi-grid,
   .grid-two,
-  .land-builder {
+  .land-builder,
+  .master-detail-grid {
     grid-template-columns: 1fr;
   }
 }

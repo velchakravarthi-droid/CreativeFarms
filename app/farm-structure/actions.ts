@@ -48,6 +48,11 @@ function acresValue(formData: FormData) {
   return Number.isFinite(acres) && acres >= 0 ? acres : 0;
 }
 
+function integerValue(formData: FormData, key: string) {
+  const value = Number(textValue(formData, key));
+  return Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
 export async function createBlock(formData: FormData) {
   const { supabase, worker } = await requireAdminWorker();
   const name = textValue(formData, "name");
@@ -69,6 +74,7 @@ export async function createBlock(formData: FormData) {
   }
 
   revalidatePath("/farm-structure");
+  revalidatePath("/farm-structure/tree-assignments");
 }
 
 export async function updateBlock(formData: FormData) {
@@ -95,6 +101,7 @@ export async function updateBlock(formData: FormData) {
   }
 
   revalidatePath("/farm-structure");
+  revalidatePath("/farm-structure/tree-assignments");
 }
 
 export async function deleteBlock(formData: FormData) {
@@ -112,6 +119,7 @@ export async function deleteBlock(formData: FormData) {
   }
 
   revalidatePath("/farm-structure");
+  revalidatePath("/farm-structure/tree-assignments");
 }
 
 export async function createRow(formData: FormData) {
@@ -135,6 +143,7 @@ export async function createRow(formData: FormData) {
   }
 
   revalidatePath("/farm-structure");
+  revalidatePath("/farm-structure/tree-assignments");
 }
 
 export async function updateRow(formData: FormData) {
@@ -160,6 +169,7 @@ export async function updateRow(formData: FormData) {
   }
 
   revalidatePath("/farm-structure");
+  revalidatePath("/farm-structure/tree-assignments");
 }
 
 export async function deleteRow(formData: FormData) {
@@ -177,4 +187,153 @@ export async function deleteRow(formData: FormData) {
   }
 
   revalidatePath("/farm-structure");
+  revalidatePath("/farm-structure/tree-assignments");
+}
+
+export async function createFarmProperty(formData: FormData) {
+  const { supabase, worker } = await requireAdminWorker();
+  const propertyType = textValue(formData, "property_type");
+  const name = textValue(formData, "name");
+
+  if (!propertyType || !name) {
+    throw new Error("Property type and name are required.");
+  }
+
+  const { error } = await supabase.from("farm_properties").insert({
+    farm_id: worker.farm_id,
+    property_type: propertyType,
+    name,
+    quantity: integerValue(formData, "quantity") || null,
+    status: statusValue(formData)
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/farm-structure/properties");
+  revalidatePath("/farm-structure/tree-assignments");
+}
+
+export async function updateFarmProperty(formData: FormData) {
+  const { supabase } = await requireAdminWorker();
+  const id = textValue(formData, "id");
+  const propertyType = textValue(formData, "property_type");
+  const name = textValue(formData, "name");
+
+  if (!id || !propertyType || !name) {
+    throw new Error("Property, type, and name are required.");
+  }
+
+  const { error } = await supabase
+    .from("farm_properties")
+    .update({
+      property_type: propertyType,
+      name,
+      quantity: integerValue(formData, "quantity") || null,
+      status: statusValue(formData)
+    })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/farm-structure/properties");
+  revalidatePath("/farm-structure/tree-assignments");
+}
+
+export async function deleteFarmProperty(formData: FormData) {
+  const { supabase } = await requireAdminWorker();
+  const id = textValue(formData, "id");
+
+  if (!id) {
+    throw new Error("Farm property is required.");
+  }
+
+  const { error } = await supabase.from("farm_properties").delete().eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/farm-structure/properties");
+  revalidatePath("/farm-structure/tree-assignments");
+}
+
+export async function createTreeAssignment(formData: FormData) {
+  const { supabase, worker } = await requireAdminWorker();
+  const farmPropertyId = textValue(formData, "farm_property_id");
+  const blockId = textValue(formData, "block_id");
+  const rowId = textValue(formData, "row_id");
+
+  if (!farmPropertyId) {
+    throw new Error("Tree type is required.");
+  }
+
+  const { error } = await supabase.from("tree_type_assignments").insert({
+    farm_id: worker.farm_id,
+    farm_property_id: farmPropertyId,
+    block_id: blockId || null,
+    row_id: rowId || null,
+    row_range: rowId ? null : textValue(formData, "row_range") || "All Rows",
+    tree_count: integerValue(formData, "tree_count"),
+    status: statusValue(formData),
+    notes: textValue(formData, "notes") || null,
+    created_by: worker.id
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/farm-structure/tree-assignments");
+}
+
+export async function updateTreeAssignment(formData: FormData) {
+  const { supabase } = await requireAdminWorker();
+  const id = textValue(formData, "id");
+  const farmPropertyId = textValue(formData, "farm_property_id");
+  const blockId = textValue(formData, "block_id");
+  const rowId = textValue(formData, "row_id");
+
+  if (!id || !farmPropertyId) {
+    throw new Error("Tree assignment and tree type are required.");
+  }
+
+  const { error } = await supabase
+    .from("tree_type_assignments")
+    .update({
+      farm_property_id: farmPropertyId,
+      block_id: blockId || null,
+      row_id: rowId || null,
+      row_range: rowId ? null : textValue(formData, "row_range") || "All Rows",
+      tree_count: integerValue(formData, "tree_count"),
+      status: statusValue(formData),
+      notes: textValue(formData, "notes") || null
+    })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/farm-structure/tree-assignments");
+}
+
+export async function deleteTreeAssignment(formData: FormData) {
+  const { supabase } = await requireAdminWorker();
+  const id = textValue(formData, "id");
+
+  if (!id) {
+    throw new Error("Tree assignment is required.");
+  }
+
+  const { error } = await supabase.from("tree_type_assignments").delete().eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/farm-structure/tree-assignments");
 }
