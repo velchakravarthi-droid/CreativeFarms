@@ -140,9 +140,9 @@ export async function loadFarmData() {
     farmId: farmResult.data?.id ?? null,
     farmName: farmResult.data?.name ?? "Creative Farm",
     totalAcres: Number(farmResult.data?.total_acres ?? 0),
-    blocks: blocks.length ? blocks : fallback.blocks,
-    properties: properties.length ? properties : fallback.properties,
-    treeAssignments: assignmentRows.length ? assignmentRows : fallback.treeAssignments,
+    blocks,
+    properties,
+    treeAssignments: assignmentRows,
     workers: workerRows.length ? workerRows : fallback.workers,
     stock: stockRows.length ? stockRows : fallback.stock,
     errors: [farmResult.error, blocksResult.error, propertiesResult.error, treeAssignmentsResult.error, workersResult.error, stockResult.error].flatMap(

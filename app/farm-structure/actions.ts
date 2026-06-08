@@ -54,6 +54,12 @@ function integerValue(formData: FormData, key: string) {
   return Number.isInteger(value) && value >= 0 ? value : 0;
 }
 
+function requireUuid(value: string, label: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+    throw new Error(`${label} must be saved in Supabase before it can be modified or deleted.`);
+  }
+}
+
 function actionError(error: unknown): ActionResult {
   return {
     ok: false,
@@ -238,6 +244,7 @@ export async function updateFarmProperty(formData: FormData) {
     if (!id || !propertyType || !name) {
       throw new Error("Property, type, and name are required.");
     }
+    requireUuid(id, "Farm property");
 
     const { error } = await supabase
       .from("farm_properties")
@@ -269,6 +276,7 @@ export async function deleteFarmProperty(formData: FormData) {
     if (!id) {
       throw new Error("Farm property is required.");
     }
+    requireUuid(id, "Farm property");
 
     const { error } = await supabase.from("farm_properties").delete().eq("id", id);
 
