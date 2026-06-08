@@ -385,6 +385,10 @@ tr:last-child td {
   grid-template-columns: 1fr;
 }
 
+.entry-grid-wide {
+  grid-column: 1 / -1;
+}
+
 .field {
   display: grid;
   gap: 7px;
