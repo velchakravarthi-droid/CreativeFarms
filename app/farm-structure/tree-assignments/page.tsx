@@ -46,9 +46,9 @@ export default async function TreeAssignmentsPage() {
               <strong className="metric">{data.blocks.length}</strong>
               <p>Block and row choices come directly from Land Structure.</p>
             </Card>
-            <Card title="Admin Control" action={<Pill tone={role === "admin" ? "good" : "warn"}>{role ?? "none"}</Pill>}>
-              <strong className="metric">{role === "admin" ? "On" : "Off"}</strong>
-              <p>Only Admin can add, modify, or delete tree assignments.</p>
+            <Card title="Tree Types" action={<Pill>Property Master</Pill>}>
+              <strong className="metric">{data.properties.filter((property) => property.type.trim().toLowerCase() === "tree").length}</strong>
+              <p>Tree type dropdown values come from Farm Property Master records with type Tree.</p>
             </Card>
           </div>
         </section>

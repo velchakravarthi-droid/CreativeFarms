@@ -54,7 +54,7 @@ export function TreeAssignmentMaintenance({
   isAdmin: boolean;
 }) {
   const router = useRouter();
-  const treeProperties = properties.filter((property) => property.type.toLowerCase() === "tree");
+  const treeProperties = properties.filter((property) => property.type.trim().toLowerCase() === "tree");
   const [selectedId, setSelectedId] = useState(assignments[0]?.id ?? "");
   const selectedAssignment = useMemo(
     () => assignments.find((assignment) => assignment.id === selectedId) ?? assignments[0],
@@ -161,6 +161,7 @@ export function TreeAssignmentMaintenance({
             <label className="field">
               <span>Tree Type</span>
               <select disabled={!isAdmin || !selectedAssignment} name="farm_property_id" defaultValue={selectedAssignment?.propertyId ?? ""} required>
+                {!treeProperties.length ? <option value="">Add Tree type in Farm Property Master</option> : null}
                 {treeProperties.map((property) => (
                   <option key={property.id} value={property.id}>
                     {property.name}
@@ -235,6 +236,7 @@ export function TreeAssignmentMaintenance({
             <label className="field">
               <span>Tree Type</span>
               <select disabled={!isAdmin} name="farm_property_id" required>
+                {!treeProperties.length ? <option value="">Add Tree type in Farm Property Master</option> : null}
                 {treeProperties.map((property) => (
                   <option key={property.id} value={property.id}>
                     {property.name}
