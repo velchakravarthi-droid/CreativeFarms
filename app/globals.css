@@ -231,12 +231,17 @@ select {
 
 .land-block-card {
   align-items: center;
+  background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  color: var(--ink);
+  cursor: pointer;
   display: grid;
   gap: 10px;
   grid-template-columns: minmax(0, 1fr) auto;
   padding: 12px;
+  text-align: left;
+  width: 100%;
 }
 
 .land-block-card.selected {
@@ -412,6 +417,63 @@ select {
   background: #e8eef4;
   color: #334155;
   margin-top: 0;
+}
+
+.danger-button {
+  background: var(--red);
+  margin-top: 10px;
+}
+
+.text-button {
+  background: transparent;
+  border: 0;
+  color: var(--blue);
+  cursor: pointer;
+  font-weight: 850;
+  padding: 0;
+}
+
+.stacked-form {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.confirm-backdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.38);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 18px;
+  position: fixed;
+  z-index: 20;
+}
+
+.confirm-dialog {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+  max-width: 420px;
+  padding: 18px;
+  width: 100%;
+}
+
+.confirm-dialog h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.confirm-dialog p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
 }
 
 .login-shell {

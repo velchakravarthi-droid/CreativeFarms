@@ -1,16 +1,17 @@
 import { AppShell } from "@/components/app-shell";
 import { Card, Field, Pill } from "@/components/ui";
-import { requireUser } from "@/lib/auth";
+import { FarmStructureMaintenance } from "@/components/farm-structure-maintenance";
+import { getCurrentWorkerRole, requireUser } from "@/lib/auth";
 import { loadFarmData } from "@/lib/load-farm-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function FarmStructurePage() {
   await requireUser();
+  const role = await getCurrentWorkerRole();
   const data = await loadFarmData();
-  const selectedBlock = data.blocks[0];
   const blockNames = ["All Blocks", ...data.blocks.map((block) => block.name)];
-  const rowNames = ["All Rows", ...(selectedBlock?.rows.map((row) => row.name) ?? [])];
+  const rowNames = ["All Rows", ...(data.blocks[0]?.rows.map((row) => row.name) ?? [])];
   const treeProperties = data.properties.filter((property) => property.type.toLowerCase() === "tree");
   const propertyNames = treeProperties.length ? treeProperties.map((property) => property.name) : data.properties.map((property) => property.name);
   const totalAcres = data.totalAcres || data.blocks.reduce((total, block) => total + block.acres, 0);
@@ -59,68 +60,7 @@ export default async function FarmStructurePage() {
           </div>
         </section>
 
-        <section id="land-structure" className="module-section">
-          <div className="module-title">
-            <h2>Land Structure</h2>
-          </div>
-          <div className="land-builder">
-            <Card title="Master Farm Blocks" action={<Pill>{data.blocks.length} blocks</Pill>}>
-              <div className="master-farm-band">
-                <strong>{data.farmName}</strong>
-                <span>{totalAcres || 125} acres</span>
-              </div>
-              <div className="land-block-list">
-                {data.blocks.map((block, index) => (
-                  <article className={`land-block-card ${index === 0 ? "selected" : ""}`} key={block.id}>
-                    <div>
-                      <strong>{block.name}</strong>
-                      <span>{block.notes || "Farm operating area"}</span>
-                    </div>
-                    <div className="land-block-meta">
-                      <span>{block.acres} acres</span>
-                      <span>{block.rowCount} rows</span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </Card>
-
-            <Card title="Block Details" action={<Pill tone="warn">Setup</Pill>}>
-              <div className="entry-grid">
-                <Field label="Block Name" placeholder={selectedBlock?.name ?? "Block name"} />
-                <Field label="Acres" type="number" placeholder={String(selectedBlock?.acres ?? "")} />
-                <Field label="Status" options={["Active", "Inactive"]} />
-                <Field label="Notes" placeholder={selectedBlock?.notes ?? "Short purpose or location"} />
-              </div>
-              <button className="button">Save Block</button>
-            </Card>
-          </div>
-
-          <Card title={`Rows in ${selectedBlock?.name ?? "Selected Block"}`} action={<Pill>{selectedBlock?.rowCount ?? 0} rows</Pill>}>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Row</th>
-                    <th>Block</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(selectedBlock?.rows ?? []).slice(0, 8).map((row) => (
-                    <tr key={row.id}>
-                      <td>{row.name}</td>
-                      <td>{selectedBlock?.name}</td>
-                      <td>
-                        <Pill tone="good">{row.status}</Pill>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </section>
+        <FarmStructureMaintenance blocks={data.blocks} farmName={data.farmName} isAdmin={role === "admin"} totalAcres={totalAcres} />
 
         <section id="property-master" className="module-section">
           <div className="module-title">

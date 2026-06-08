@@ -7,7 +7,7 @@ type FarmBlockRow = {
   acres: number | null;
   status: string;
   notes?: string | null;
-  farm_rows?: { id: string; name?: string | null; status?: string | null }[];
+  farm_rows?: { id: string; name?: string | null; status?: string | null; notes?: string | null }[];
 };
 
 type FarmPropertyRow = {
@@ -58,7 +58,7 @@ export async function loadFarmData() {
     supabase.from("farms").select("id, name, total_acres").order("created_at", { ascending: true }).limit(1).maybeSingle(),
     supabase
       .from("farm_blocks")
-      .select("id, name, acres, status, notes, farm_rows(id, name, status)")
+      .select("id, name, acres, status, notes, farm_rows(id, name, status, notes)")
       .order("name"),
     supabase.from("farm_properties").select("id, property_type, name, quantity, status").order("property_type").order("name"),
     supabase
@@ -80,9 +80,10 @@ export async function loadFarmData() {
       block.farm_rows?.map((row) => ({
         id: row.id,
         name: row.name ?? "Row",
-        status: row.status ?? "active"
+        status: normalizeStatus(row.status),
+        notes: row.notes ?? ""
       })) ?? [],
-    status: block.status,
+    status: normalizeStatus(block.status),
     notes: block.notes ?? ""
   }));
 
@@ -91,7 +92,7 @@ export async function loadFarmData() {
     type: property.property_type,
     name: property.name,
     quantity: property.quantity?.toString() ?? "",
-    status: property.status
+    status: normalizeStatus(property.status)
   }));
 
   const assignmentRows = ((treeAssignmentsResult.data ?? []) as TreeAssignmentRow[]).map((assignment) => {
@@ -106,7 +107,7 @@ export async function loadFarmData() {
       block: farmBlock?.name ?? "All Blocks",
       row: farmRow?.name ?? assignment.row_range ?? "All Rows",
       count: assignment.tree_count ?? 0,
-      status: assignment.status,
+      status: normalizeStatus(assignment.status),
       notes: assignment.notes ?? ""
     };
   });
@@ -153,12 +154,14 @@ function sampleData(source: "sample" | "supabase") {
     blocks: farmBlocks.map((block, index) => ({
       id: `sample-block-${index}`,
       ...block,
+      status: "active",
       rowCount: block.rows,
       rows: Array.from({ length: Math.min(block.rows, 6) }, (_, rowIndex) => ({
-        id: `sample-row-${index}-${rowIndex}`,
-        name: `Row ${rowIndex + 1}`,
-        rowNumber: rowIndex + 1,
-        status: "active"
+      id: `sample-row-${index}-${rowIndex}`,
+      name: `Row ${rowIndex + 1}`,
+      rowNumber: rowIndex + 1,
+      status: "active",
+      notes: ""
       })),
       notes:
         block.name === "South Block"
@@ -189,4 +192,9 @@ function sampleData(source: "sample" | "supabase") {
 
 function firstRelated<T>(value: T | T[] | null | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizeStatus(status: string | null | undefined) {
+  const value = status?.toLowerCase();
+  return value === "inactive" || value === "hold" ? value : "active";
 }
