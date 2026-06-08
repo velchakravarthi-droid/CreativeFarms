@@ -37,7 +37,7 @@ type TreeAssignment = {
 };
 
 type PendingAction = {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<{ ok: boolean; error?: string } | void>;
   formData: FormData;
   message: string;
 };
@@ -72,7 +72,7 @@ export function TreeAssignmentMaintenance({
     setSelectedBlockId(assignment.blockId);
   }
 
-  function requestAction(action: (formData: FormData) => Promise<void>, formData: FormData, message: string) {
+  function requestAction(action: (formData: FormData) => Promise<{ ok: boolean; error?: string } | void>, formData: FormData, message: string) {
     setPendingAction({ action, formData, message });
   }
 
@@ -83,7 +83,11 @@ export function TreeAssignmentMaintenance({
     startTransition(() => {
       void (async () => {
         try {
-          await transaction.action(transaction.formData);
+          const result = await transaction.action(transaction.formData);
+          if (result && !result.ok) {
+            window.alert(result.error ?? "Transaction failed.");
+            return;
+          }
           router.refresh();
         } catch (error) {
           window.alert(error instanceof Error ? error.message : "Transaction failed.");

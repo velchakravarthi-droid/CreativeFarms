@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 type RecordStatus = "active" | "inactive" | "hold";
+type ActionResult = { ok: true } | { ok: false; error: string };
 
 async function requireAdminWorker() {
   const supabase = await createClient();
@@ -51,6 +52,13 @@ function acresValue(formData: FormData) {
 function integerValue(formData: FormData, key: string) {
   const value = Number(textValue(formData, key));
   return Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
+function actionError(error: unknown): ActionResult {
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : "Transaction failed."
+  };
 }
 
 export async function createBlock(formData: FormData) {
@@ -191,74 +199,89 @@ export async function deleteRow(formData: FormData) {
 }
 
 export async function createFarmProperty(formData: FormData) {
-  const { supabase, worker } = await requireAdminWorker();
-  const propertyType = textValue(formData, "property_type");
-  const name = textValue(formData, "name");
+  try {
+    const { supabase, worker } = await requireAdminWorker();
+    const propertyType = textValue(formData, "property_type");
+    const name = textValue(formData, "name");
 
-  if (!propertyType || !name) {
-    throw new Error("Property type and name are required.");
-  }
+    if (!propertyType || !name) {
+      throw new Error("Property type and name are required.");
+    }
 
-  const { error } = await supabase.from("farm_properties").insert({
-    farm_id: worker.farm_id,
-    property_type: propertyType,
-    name,
-    quantity: integerValue(formData, "quantity") || null,
-    status: statusValue(formData)
-  });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  revalidatePath("/farm-structure/properties");
-  revalidatePath("/farm-structure/tree-assignments");
-}
-
-export async function updateFarmProperty(formData: FormData) {
-  const { supabase } = await requireAdminWorker();
-  const id = textValue(formData, "id");
-  const propertyType = textValue(formData, "property_type");
-  const name = textValue(formData, "name");
-
-  if (!id || !propertyType || !name) {
-    throw new Error("Property, type, and name are required.");
-  }
-
-  const { error } = await supabase
-    .from("farm_properties")
-    .update({
+    const { error } = await supabase.from("farm_properties").insert({
+      farm_id: worker.farm_id,
       property_type: propertyType,
       name,
       quantity: integerValue(formData, "quantity") || null,
       status: statusValue(formData)
-    })
-    .eq("id", id);
+    });
 
-  if (error) {
-    throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    revalidatePath("/farm-structure/properties");
+    revalidatePath("/farm-structure/tree-assignments");
+    return { ok: true };
+  } catch (error) {
+    return actionError(error);
   }
+}
 
-  revalidatePath("/farm-structure/properties");
-  revalidatePath("/farm-structure/tree-assignments");
+export async function updateFarmProperty(formData: FormData) {
+  try {
+    const { supabase } = await requireAdminWorker();
+    const id = textValue(formData, "id");
+    const propertyType = textValue(formData, "property_type");
+    const name = textValue(formData, "name");
+
+    if (!id || !propertyType || !name) {
+      throw new Error("Property, type, and name are required.");
+    }
+
+    const { error } = await supabase
+      .from("farm_properties")
+      .update({
+        property_type: propertyType,
+        name,
+        quantity: integerValue(formData, "quantity") || null,
+        status: statusValue(formData)
+      })
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    revalidatePath("/farm-structure/properties");
+    revalidatePath("/farm-structure/tree-assignments");
+    return { ok: true };
+  } catch (error) {
+    return actionError(error);
+  }
 }
 
 export async function deleteFarmProperty(formData: FormData) {
-  const { supabase } = await requireAdminWorker();
-  const id = textValue(formData, "id");
+  try {
+    const { supabase } = await requireAdminWorker();
+    const id = textValue(formData, "id");
 
-  if (!id) {
-    throw new Error("Farm property is required.");
+    if (!id) {
+      throw new Error("Farm property is required.");
+    }
+
+    const { error } = await supabase.from("farm_properties").delete().eq("id", id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    revalidatePath("/farm-structure/properties");
+    revalidatePath("/farm-structure/tree-assignments");
+    return { ok: true };
+  } catch (error) {
+    return actionError(error);
   }
-
-  const { error } = await supabase.from("farm_properties").delete().eq("id", id);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  revalidatePath("/farm-structure/properties");
-  revalidatePath("/farm-structure/tree-assignments");
 }
 
 export async function createTreeAssignment(formData: FormData) {

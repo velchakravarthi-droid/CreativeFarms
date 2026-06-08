@@ -39,7 +39,7 @@ export function FarmStructureMaintenance({
   const [selectedBlockId, setSelectedBlockId] = useState(blocks[0]?.id ?? "");
   const [editingRowId, setEditingRowId] = useState(blocks[0]?.rows[0]?.id ?? "");
   const [pendingAction, setPendingAction] = useState<{
-    action: (formData: FormData) => Promise<void>;
+    action: (formData: FormData) => Promise<{ ok: boolean; error?: string } | void>;
     formData: FormData;
     message: string;
   } | null>(null);
@@ -50,7 +50,7 @@ export function FarmStructureMaintenance({
   );
   const editingRow = selectedBlock?.rows.find((row) => row.id === editingRowId) ?? selectedBlock?.rows[0];
 
-  function requestAction(action: (formData: FormData) => Promise<void>, formData: FormData, message: string) {
+  function requestAction(action: (formData: FormData) => Promise<{ ok: boolean; error?: string } | void>, formData: FormData, message: string) {
     setPendingAction({ action, formData, message });
   }
 
@@ -61,7 +61,11 @@ export function FarmStructureMaintenance({
     startTransition(() => {
       void (async () => {
         try {
-          await transaction.action(transaction.formData);
+          const result = await transaction.action(transaction.formData);
+          if (result && !result.ok) {
+            window.alert(result.error ?? "Transaction failed.");
+            return;
+          }
           router.refresh();
         } catch (error) {
           window.alert(error instanceof Error ? error.message : "Transaction failed.");
