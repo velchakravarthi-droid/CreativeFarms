@@ -42,9 +42,9 @@ type TreeAssignmentRow = {
   row_range: string | null;
   status: string;
   notes: string | null;
-  farm_properties?: { property_type: string; name: string } | null;
-  farm_blocks?: { name: string } | null;
-  farm_rows?: { name: string | null } | null;
+  farm_properties?: { property_type: string; name: string } | { property_type: string; name: string }[] | null;
+  farm_blocks?: { name: string } | { name: string }[] | null;
+  farm_rows?: { name: string | null } | { name: string | null }[] | null;
 };
 
 export async function loadFarmData() {
@@ -94,16 +94,22 @@ export async function loadFarmData() {
     status: property.status
   }));
 
-  const assignmentRows = ((treeAssignmentsResult.data ?? []) as TreeAssignmentRow[]).map((assignment) => ({
-    id: assignment.id,
-    propertyType: assignment.farm_properties?.property_type ?? "Tree",
-    propertyName: assignment.farm_properties?.name ?? "Tree",
-    block: assignment.farm_blocks?.name ?? "All Blocks",
-    row: assignment.farm_rows?.name ?? assignment.row_range ?? "All Rows",
-    count: assignment.tree_count ?? 0,
-    status: assignment.status,
-    notes: assignment.notes ?? ""
-  }));
+  const assignmentRows = ((treeAssignmentsResult.data ?? []) as TreeAssignmentRow[]).map((assignment) => {
+    const farmProperty = firstRelated(assignment.farm_properties);
+    const farmBlock = firstRelated(assignment.farm_blocks);
+    const farmRow = firstRelated(assignment.farm_rows);
+
+    return {
+      id: assignment.id,
+      propertyType: farmProperty?.property_type ?? "Tree",
+      propertyName: farmProperty?.name ?? "Tree",
+      block: farmBlock?.name ?? "All Blocks",
+      row: farmRow?.name ?? assignment.row_range ?? "All Rows",
+      count: assignment.tree_count ?? 0,
+      status: assignment.status,
+      notes: assignment.notes ?? ""
+    };
+  });
 
   const workerRows = ((workersResult.data ?? []) as WorkerRow[]).map((worker) => ({
     name: worker.full_name,
@@ -179,4 +185,8 @@ function sampleData(source: "sample" | "supabase") {
     stock: stockItems,
     errors: []
   };
+}
+
+function firstRelated<T>(value: T | T[] | null | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }
