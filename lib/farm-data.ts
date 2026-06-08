@@ -24,7 +24,6 @@ export const navItems = [
   { id: "irrigation", label: "Irrigation", href: "/irrigation", icon: Droplets },
   { id: "fertigation", label: "Fertigation", href: "/fertigation", icon: Sprout },
   { id: "pest", label: "Pest / Disease", href: "/pest-disease", icon: ShieldAlert },
-  { id: "exceptions", label: "Tree Issues", href: "/tree-issues", icon: TreePalm },
   { id: "labor", label: "Labor", href: "/labor", icon: Users },
   { id: "stock", label: "Stock", href: "/stock", icon: Package },
   { id: "harvest", label: "Harvest", href: "/harvest", icon: ClipboardList },
