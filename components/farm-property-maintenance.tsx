@@ -145,6 +145,7 @@ export function FarmPropertyMaintenance({ properties, isAdmin }: { properties: F
           </form>
 
           <form
+            id="add-property-form"
             className="entry-grid single stacked-form"
             onSubmit={(event) => {
               event.preventDefault();
@@ -179,12 +180,10 @@ export function FarmPropertyMaintenance({ properties, isAdmin }: { properties: F
                 <option value="hold">Hold</option>
               </select>
             </label>
-            <button className="button secondary-button" disabled={!isAdmin || isPending} type="submit">
-              Add Property
-            </button>
           </form>
 
           <form
+            id="delete-property-form"
             onSubmit={(event) => {
               event.preventDefault();
               if (!isAdmin) return;
@@ -192,10 +191,16 @@ export function FarmPropertyMaintenance({ properties, isAdmin }: { properties: F
             }}
           >
             <input name="id" type="hidden" value={selectedProperty?.id ?? ""} />
-            <button className="button danger-button" disabled={!isAdmin || !selectedProperty || isPending} type="submit">
+          </form>
+
+          <div className="action-row">
+            <button className="button secondary-button" disabled={!isAdmin || isPending} form="add-property-form" type="submit">
+              Add Property
+            </button>
+            <button className="button danger-button" disabled={!isAdmin || !selectedProperty || isPending} form="delete-property-form" type="submit">
               Delete Property
             </button>
-          </form>
+          </div>
         </Card>
       </div>
     </section>

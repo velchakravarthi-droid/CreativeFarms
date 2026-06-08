@@ -224,6 +224,7 @@ export function TreeAssignmentMaintenance({
           </form>
 
           <form
+            id="add-assignment-form"
             className="entry-grid single stacked-form"
             onSubmit={(event) => {
               event.preventDefault();
@@ -283,12 +284,10 @@ export function TreeAssignmentMaintenance({
               <span>Notes</span>
               <input disabled={!isAdmin} name="notes" placeholder="Optional" />
             </label>
-            <button className="button secondary-button" disabled={!isAdmin || isPending || !treeProperties.length} type="submit">
-              Add Assignment
-            </button>
           </form>
 
           <form
+            id="delete-assignment-form"
             onSubmit={(event) => {
               event.preventDefault();
               if (!isAdmin) return;
@@ -296,10 +295,26 @@ export function TreeAssignmentMaintenance({
             }}
           >
             <input name="id" type="hidden" value={selectedAssignment?.id ?? ""} />
-            <button className="button danger-button" disabled={!isAdmin || !selectedAssignment || isPending} type="submit">
+          </form>
+
+          <div className="action-row">
+            <button
+              className="button secondary-button"
+              disabled={!isAdmin || isPending || !treeProperties.length}
+              form="add-assignment-form"
+              type="submit"
+            >
+              Add Assignment
+            </button>
+            <button
+              className="button danger-button"
+              disabled={!isAdmin || !selectedAssignment || isPending}
+              form="delete-assignment-form"
+              type="submit"
+            >
               Delete Assignment
             </button>
-          </form>
+          </div>
         </Card>
       </div>
     </section>

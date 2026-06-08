@@ -171,6 +171,7 @@ export function FarmStructureMaintenance({
           </form>
 
           <form
+            id="add-block-form"
             className="entry-grid single stacked-form"
             onSubmit={(event) => {
               event.preventDefault();
@@ -199,12 +200,10 @@ export function FarmStructureMaintenance({
               <span>Notes</span>
               <input disabled={!isAdmin} name="notes" placeholder="Purpose or location" />
             </label>
-            <button className="button secondary-button" disabled={!isAdmin || isPending} type="submit">
-              Add Block
-            </button>
           </form>
 
           <form
+            id="delete-block-form"
             onSubmit={(event) => {
               event.preventDefault();
               if (!isAdmin) return;
@@ -212,10 +211,16 @@ export function FarmStructureMaintenance({
             }}
           >
             <input name="id" type="hidden" value={selectedBlock?.id ?? ""} />
-            <button className="button danger-button" disabled={!isAdmin || !selectedBlock || isPending} type="submit">
+          </form>
+
+          <div className="action-row">
+            <button className="button secondary-button" disabled={!isAdmin || isPending} form="add-block-form" type="submit">
+              Add Block
+            </button>
+            <button className="button danger-button" disabled={!isAdmin || !selectedBlock || isPending} form="delete-block-form" type="submit">
               Delete Block
             </button>
-          </form>
+          </div>
         </Card>
       </div>
 
@@ -282,6 +287,7 @@ export function FarmStructureMaintenance({
           </form>
 
           <form
+            id="add-row-form"
             className="entry-grid single stacked-form"
             onSubmit={(event) => {
               event.preventDefault();
@@ -307,12 +313,10 @@ export function FarmStructureMaintenance({
               <span>Notes</span>
               <input disabled={!isAdmin || !selectedBlock} name="notes" placeholder="Optional" />
             </label>
-            <button className="button secondary-button" disabled={!isAdmin || !selectedBlock || isPending} type="submit">
-              Add Row
-            </button>
           </form>
 
           <form
+            id="delete-row-form"
             onSubmit={(event) => {
               event.preventDefault();
               if (!isAdmin) return;
@@ -320,10 +324,16 @@ export function FarmStructureMaintenance({
             }}
           >
             <input name="id" type="hidden" value={editingRow?.id ?? ""} />
-            <button className="button danger-button" disabled={!isAdmin || !editingRow || isPending} type="submit">
+          </form>
+
+          <div className="action-row">
+            <button className="button secondary-button" disabled={!isAdmin || !selectedBlock || isPending} form="add-row-form" type="submit">
+              Add Row
+            </button>
+            <button className="button danger-button" disabled={!isAdmin || !editingRow || isPending} form="delete-row-form" type="submit">
               Delete Row
             </button>
-          </form>
+          </div>
         </Card>
       </div>
     </section>

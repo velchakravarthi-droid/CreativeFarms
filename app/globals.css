@@ -427,7 +427,7 @@ select {
 
 .danger-button {
   background: var(--red);
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .text-button {
@@ -443,6 +443,17 @@ select {
   border-top: 1px solid var(--line);
   margin-top: 14px;
   padding-top: 14px;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.action-row .button {
+  margin-top: 0;
 }
 
 .confirm-backdrop {
