@@ -28,7 +28,7 @@ body {
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 button,
@@ -52,9 +52,11 @@ select {
 .brand {
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
   display: flex;
   gap: 12px;
   padding: 22px 18px;
+  text-decoration: none;
 }
 
 .brand span {
@@ -147,6 +149,29 @@ select {
   margin: 0;
 }
 
+.subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subnav a {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: #334155;
+  font-size: 13px;
+  font-weight: 850;
+  min-height: 36px;
+  padding: 9px 12px;
+  text-decoration: none;
+}
+
+.subnav a:hover {
+  border-color: #a8b6c5;
+  color: var(--ink);
+}
+
 .notice {
   background: var(--amber-soft);
   border: 1px solid #f4d27b;
@@ -174,6 +199,75 @@ select {
 
 .grid-two {
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+}
+
+.land-builder {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+}
+
+.master-farm-band {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px;
+}
+
+.master-farm-band span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.land-block-list {
+  display: grid;
+  gap: 10px;
+}
+
+.land-block-card {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 12px;
+}
+
+.land-block-card.selected {
+  border-color: var(--green);
+  box-shadow: inset 3px 0 0 var(--green);
+}
+
+.land-block-card strong,
+.land-block-card span {
+  display: block;
+}
+
+.land-block-card span {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.land-block-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.land-block-meta span {
+  background: #f1f5f9;
+  border-radius: var(--radius);
+  color: #334155;
+  font-weight: 800;
+  margin: 0;
+  padding: 6px 8px;
+  white-space: nowrap;
 }
 
 .card {
@@ -396,7 +490,8 @@ select {
   }
 
   .kpi-grid,
-  .grid-two {
+  .grid-two,
+  .land-builder {
     grid-template-columns: 1fr;
   }
 }
@@ -410,6 +505,14 @@ select {
   .nav-list,
   .entry-grid {
     grid-template-columns: 1fr;
+  }
+
+  .land-block-card {
+    grid-template-columns: 1fr;
+  }
+
+  .land-block-meta {
+    flex-wrap: wrap;
   }
 
   .content {
