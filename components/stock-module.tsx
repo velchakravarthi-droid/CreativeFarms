@@ -2,61 +2,8 @@
 
 import { addStock, createStockCategory, createStockItem, createStockType, reduceStock } from "@/app/stock/actions";
 import { Card, Pill } from "@/components/ui";
+import type { StockBalance, StockCategory, StockItem, StockTransaction, StockType } from "@/lib/load-stock-data";
 import { useMemo, useState, useTransition } from "react";
-
-type Category = {
-  categoryId: string;
-  name: string;
-};
-
-type StockType = {
-  typeId: string;
-  categoryId: string;
-  name: string;
-};
-
-type StockItem = {
-  itemId: string;
-  categoryId: string;
-  typeId: string;
-  categoryName: string;
-  typeName: string;
-  itemName: string;
-  baseUnit: string;
-  hasPackage: boolean;
-  packageName: string;
-  packageQuantity: number;
-  packageUnit: string;
-  minimumStockQuantity: number;
-  minimumStockUnit: string;
-  isActive: boolean;
-};
-
-type Balance = {
-  itemId: string;
-  currentBaseQuantity: number;
-  baseUnit: string;
-  currentPackageCount: number | null;
-  packageName: string;
-  lastTransactionDate: string;
-};
-
-type Transaction = {
-  transactionId: string;
-  itemId: string;
-  itemName: string;
-  transactionType: string;
-  transactionDate: string;
-  quantity: number;
-  quantityUnit: string;
-  baseQuantity: number;
-  baseUnit: string;
-  totalCost: number | null;
-  usedFor: string;
-  supplierName: string;
-  notes: string;
-  createdBy: string;
-};
 
 type Worker = {
   name: string;
@@ -67,6 +14,8 @@ type PendingAction = {
   formData: FormData;
   message: string;
 };
+
+type StockTab = "category-type" | "stock-item" | "add-stock" | "reduce-stock" | "history";
 
 const units = ["Kg", "Bag", "Litre", "Piece", "Meter", "Ton", "Bottle", "Can"];
 const usedForOptions = [
@@ -93,32 +42,25 @@ export function StockModule({
   workers,
   zones
 }: {
-  categories: Category[];
+  categories: StockCategory[];
   types: StockType[];
   items: StockItem[];
-  balances: Balance[];
-  transactions: Transaction[];
+  balances: StockBalance[];
+  transactions: StockTransaction[];
   workers: Worker[];
   zones: string[];
 }) {
+  const [activeTab, setActiveTab] = useState<StockTab>("category-type");
   const [selectedItemId, setSelectedItemId] = useState(items[0]?.itemId ?? "");
-  const [selectedMasterCategoryId, setSelectedMasterCategoryId] = useState(categories[0]?.categoryId ?? "");
+  const [selectedTypeCategoryId, setSelectedTypeCategoryId] = useState(categories[0]?.categoryId ?? "");
+  const [selectedItemCategoryId, setSelectedItemCategoryId] = useState(categories[0]?.categoryId ?? "");
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [isPending, startTransition] = useTransition();
   const selectedItem = items.find((item) => item.itemId === selectedItemId) ?? items[0];
-  const selectedBalance = balances.find((balance) => balance.itemId === selectedItem?.itemId);
-  const itemTypes = useMemo(() => types.filter((type) => type.categoryId === selectedMasterCategoryId), [selectedMasterCategoryId, types]);
+  const itemCategoryOptions = useMemo(() => types.filter((type) => type.categoryId === selectedItemCategoryId), [selectedItemCategoryId, types]);
 
   function balanceFor(item: StockItem) {
     return balances.find((balance) => balance.itemId === item.itemId);
-  }
-
-  function minimumBase(item: StockItem) {
-    if (!item.minimumStockQuantity) return 0;
-    if (item.hasPackage && item.minimumStockUnit === item.packageName) {
-      return item.minimumStockQuantity * item.packageQuantity;
-    }
-    return item.minimumStockQuantity;
   }
 
   function displayBalance(item: StockItem) {
@@ -170,56 +112,29 @@ export function StockModule({
         </div>
       ) : null}
 
-      <section className="module-section">
-        <div className="module-title">
-          <h2>Stock Balance</h2>
+      <section className="module-section stock-workspace">
+        <div className="stock-tabs" role="tablist" aria-label="Stock maintenance">
+          {[
+            ["category-type", "Add Category / Type"],
+            ["stock-item", "Add Stock Item"],
+            ["add-stock", "Add Stock"],
+            ["reduce-stock", "Reduce Stock"],
+            ["history", "History"]
+          ].map(([id, label]) => (
+            <button
+              aria-selected={activeTab === id}
+              className={`stock-tab ${activeTab === id ? "active" : ""}`}
+              key={id}
+              onClick={() => setActiveTab(id as StockTab)}
+              role="tab"
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        <Card title="Current Stock" action={<Pill>{items.length} items</Pill>}>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Type</th>
-                  <th>Item Name</th>
-                  <th>Current Balance</th>
-                  <th>Base Unit</th>
-                  <th>Package Balance</th>
-                  <th>Minimum Stock Alert</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => {
-                  const balance = balanceFor(item);
-                  const current = Number(balance?.currentBaseQuantity ?? 0);
-                  const low = current <= minimumBase(item);
-                  return (
-                    <tr key={item.itemId}>
-                      <td>{item.categoryName}</td>
-                      <td>{item.typeName || "-"}</td>
-                      <td>{item.itemName}</td>
-                      <td>{displayBalance(item)}</td>
-                      <td>{item.baseUnit}</td>
-                      <td>{item.hasPackage ? `${formatQty(current / item.packageQuantity)} ${item.packageName}` : "-"}</td>
-                      <td>{item.minimumStockQuantity ? `${item.minimumStockQuantity} ${item.minimumStockUnit}` : "-"}</td>
-                      <td>
-                        <Pill tone={low ? "warn" : "good"}>{low ? "Low Stock" : "OK"}</Pill>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </section>
 
-      <section className="module-section">
-        <div className="module-title">
-          <h2>Stock Master</h2>
-        </div>
-        <div className="grid-two">
+        {activeTab === "category-type" ? (
           <Card title="Add Category / Type" action={<Pill>Master</Pill>}>
             <form
               className="entry-grid"
@@ -251,9 +166,9 @@ export function StockModule({
                 <span>Category</span>
                 <select
                   name="category_id"
-                  onChange={(event) => setSelectedMasterCategoryId(event.target.value)}
+                  onChange={(event) => setSelectedTypeCategoryId(event.target.value)}
                   required
-                  value={selectedMasterCategoryId}
+                  value={selectedTypeCategoryId}
                 >
                   {categories.map((category) => (
                     <option key={category.categoryId} value={category.categoryId}>
@@ -271,7 +186,9 @@ export function StockModule({
               </button>
             </form>
           </Card>
+        ) : null}
 
+        {activeTab === "stock-item" ? (
           <Card title="Add Stock Item" action={<Pill>Item</Pill>}>
             <form
               className="entry-grid"
@@ -282,7 +199,7 @@ export function StockModule({
             >
               <label className="field">
                 <span>Category</span>
-                <select name="category_id" required>
+                <select name="category_id" onChange={(event) => setSelectedItemCategoryId(event.target.value)} required value={selectedItemCategoryId}>
                   {categories.map((category) => (
                     <option key={category.categoryId} value={category.categoryId}>
                       {category.name}
@@ -294,7 +211,7 @@ export function StockModule({
                 <span>Type</span>
                 <select name="stock_type_id">
                   <option value="">No type</option>
-                  {itemTypes.map((type) => (
+                  {itemCategoryOptions.map((type) => (
                     <option key={type.typeId} value={type.typeId}>
                       {type.name}
                     </option>
@@ -360,14 +277,9 @@ export function StockModule({
               </button>
             </form>
           </Card>
-        </div>
-      </section>
+        ) : null}
 
-      <section className="module-section">
-        <div className="module-title">
-          <h2>Add / Reduce Stock</h2>
-        </div>
-        <div className="grid-two">
+        {activeTab === "add-stock" ? (
           <Card title="Add Stock" action={<Pill>Purchase</Pill>}>
             <StockMovementForm
               action={addStock}
@@ -380,6 +292,9 @@ export function StockModule({
               selectedItem={selectedItem}
             />
           </Card>
+        ) : null}
+
+        {activeTab === "reduce-stock" ? (
           <Card title="Reduce Stock" action={<Pill tone="warn">Usage</Pill>}>
             <p>Available: {selectedItem ? displayBalance(selectedItem) : "-"}</p>
             <StockMovementForm
@@ -396,14 +311,10 @@ export function StockModule({
               zones={zones}
             />
           </Card>
-        </div>
-      </section>
+        ) : null}
 
-      <section className="module-section">
-        <div className="module-title">
-          <h2>Stock History</h2>
-        </div>
-        <Card title="Transaction History" action={<Pill>{transactions.length} transactions</Pill>}>
+        {activeTab === "history" ? (
+          <Card title="Transaction History" action={<Pill>{transactions.length} transactions</Pill>}>
           <div className="table-wrap">
             <table>
               <thead>
@@ -442,7 +353,8 @@ export function StockModule({
               </tbody>
             </table>
           </div>
-        </Card>
+          </Card>
+        ) : null}
       </section>
     </div>
   );
@@ -462,7 +374,7 @@ function StockMovementForm({
   zones = []
 }: {
   action: (formData: FormData) => Promise<{ ok: boolean; error?: string }>;
-  balances?: Balance[];
+  balances?: StockBalance[];
   buttonText: string;
   isPending: boolean;
   items: StockItem[];
