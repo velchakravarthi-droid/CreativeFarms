@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Creative Farm - Stock Prototype</title>
+    <style>
+      :root {
+        --bg: #eef2f4;
+        --panel: #fff;
+        --ink: #172033;
+        --muted: #657386;
+        --line: #dce3ea;
+        --green: #16825d;
+        --green-soft: #dff5eb;
+        --blue: #2563eb;
+        --blue-soft: #dbeafe;
+        --amber: #b45309;
+        --amber-soft: #fef3c7;
+        --red: #b91c1c;
+        --red-soft: #fee2e2;
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, Arial, sans-serif;
+        margin: 0;
+      }
+
+      .shell {
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .topbar,
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+
+      p {
+        color: var(--muted);
+        margin: 6px 0 0;
+      }
+
+      .tabs,
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .tab,
+      .button {
+        border: 0;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-weight: 800;
+        min-height: 42px;
+        padding: 10px 14px;
+      }
+
+      .tab {
+        background: #fff;
+        border: 1px solid var(--line);
+        color: #334155;
+      }
+
+      .tab.active,
+      .button {
+        background: var(--green);
+        color: #fff;
+      }
+
+      .secondary {
+        background: #e8eef4;
+        color: #334155;
+      }
+
+      .danger {
+        background: var(--red);
+      }
+
+      .grid-3,
+      .grid-2 {
+        display: grid;
+        gap: 14px;
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .grid-2 {
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 0.85fr);
+      }
+
+      .metric {
+        display: block;
+        font-size: 30px;
+        line-height: 1;
+        margin-top: 10px;
+      }
+
+      .pill {
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 5px 10px;
+      }
+
+      .good {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .warn {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .bad {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .info {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .table-wrap {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow-x: auto;
+      }
+
+      table {
+        border-collapse: collapse;
+        font-size: 14px;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #edf1f5;
+        padding: 12px;
+        text-align: left;
+      }
+
+      th {
+        background: #f8fafc;
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      label {
+        display: grid;
+        gap: 7px;
+      }
+
+      label span {
+        color: #334155;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      input,
+      select {
+        background: #f8fafc;
+        border: 1px solid #cfd8e3;
+        border-radius: var(--radius);
+        color: var(--ink);
+        min-height: 42px;
+        padding: 10px 12px;
+        width: 100%;
+      }
+
+      .screen {
+        display: none;
+      }
+
+      .screen.active {
+        display: grid;
+        gap: 14px;
+      }
+
+      @media (max-width: 900px) {
+        .grid-3,
+        .grid-2,
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Stock Prototype</h1>
+          <p>Transaction-driven stock balance with package conversion and reduce validation.</p>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-screen="balance">Stock Balance</button>
+          <button class="tab" data-screen="master">Stock Master</button>
+          <button class="tab" data-screen="add">Add Stock</button>
+          <button class="tab" data-screen="reduce">Reduce Stock</button>
+          <button class="tab" data-screen="history">History</button>
+        </div>
+      </header>
+
+      <section class="grid-3">
+        <article class="card">
+          <div class="section-head"><h2>Items</h2><span class="pill info">Master</span></div>
+          <strong class="metric">4</strong>
+          <p>Urea, DAP, Diesel, and 16mm Drip Connector seeded.</p>
+        </article>
+        <article class="card">
+          <div class="section-head"><h2>Low Stock</h2><span class="pill warn">Alert</span></div>
+          <strong class="metric">1</strong>
+          <p>DAP is below minimum stock threshold.</p>
+        </article>
+        <article class="card">
+          <div class="section-head"><h2>Rule</h2><span class="pill good">Protected</span></div>
+          <strong class="metric">No Manual Balance</strong>
+          <p>Balance changes only through ADD and REDUCE transactions.</p>
+        </article>
+      </section>
+
+      <section id="balance" class="screen active">
+        <article class="card">
+          <div class="section-head"><h2>Stock Balance</h2><span class="pill good">Current</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Category</th><th>Type</th><th>Item</th><th>Current Balance</th><th>Base Unit</th><th>Package Balance</th><th>Minimum</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Fertilizer</td><td>Nitrogen Fertilizer</td><td>Urea</td><td>15 Bags / 675 Kg</td><td>Kg</td><td>15 Bags</td><td>10 Bags</td><td><span class="pill good">OK</span></td></tr>
+                <tr><td>Fertilizer</td><td>Phosphorus Fertilizer</td><td>DAP</td><td>4 Bags / 200 Kg</td><td>Kg</td><td>4 Bags</td><td>5 Bags</td><td><span class="pill warn">Low Stock</span></td></tr>
+                <tr><td>Fuel / Oil</td><td>Diesel</td><td>Diesel</td><td>175 Litre</td><td>Litre</td><td>-</td><td>100 Litre</td><td><span class="pill good">OK</span></td></tr>
+                <tr><td>Irrigation Material</td><td>Connector</td><td>16mm Drip Connector</td><td>120 Piece</td><td>Piece</td><td>-</td><td>50 Piece</td><td><span class="pill good">OK</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section id="master" class="screen">
+        <div class="grid-2">
+          <article class="card">
+            <div class="section-head"><h2>Add Category / Type</h2><span class="pill info">Master</span></div>
+            <div class="form-grid">
+              <label><span>Category Name</span><input value="Organic Input" /></label>
+              <label><span>Stock Type Name</span><input value="Bio-fertilizer" /></label>
+              <button class="button secondary">Add Category</button>
+              <button class="button secondary">Add Type</button>
+            </div>
+          </article>
+          <article class="card">
+            <div class="section-head"><h2>Add Stock Item</h2><span class="pill good">Item</span></div>
+            <div class="form-grid">
+              <label><span>Category</span><select><option>Fertilizer</option><option>Fuel / Oil</option></select></label>
+              <label><span>Type</span><select><option>Nitrogen Fertilizer</option><option>Diesel</option></select></label>
+              <label><span>Item Name</span><input value="Urea" /></label>
+              <label><span>Base Unit</span><select><option>Kg</option><option>Litre</option><option>Piece</option></select></label>
+              <label><span>Has Package</span><select><option>Yes</option><option>No</option></select></label>
+              <label><span>Package Name</span><input value="Bag" /></label>
+              <label><span>Package Quantity</span><input value="45" /></label>
+              <label><span>Minimum Stock</span><input value="10 Bag" /></label>
+              <button class="button">Add Item</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="add" class="screen">
+        <article class="card">
+          <div class="section-head"><h2>Add Stock</h2><span class="pill good">ADD Transaction</span></div>
+          <div class="form-grid">
+            <label><span>Stock Item</span><select><option>Urea</option><option>Diesel</option></select></label>
+            <label><span>Purchase Date</span><input type="date" /></label>
+            <label><span>Package Count</span><input value="20" /></label>
+            <label><span>Quantity Per Package</span><input value="45" /></label>
+            <label><span>Base Quantity</span><input readonly value="900 Kg" /></label>
+            <label><span>Cost Per Package</span><input value="1350" /></label>
+            <label><span>Total Cost</span><input readonly value="27000" /></label>
+            <label><span>Supplier</span><input value="Local Agri Supplier" /></label>
+            <label><span>Invoice Number</span><input value="INV-1001" /></label>
+            <label><span>Storage Location</span><input value="Stock Yard" /></label>
+            <button class="button">Save Add Stock</button>
+          </div>
+        </article>
+      </section>
+
+      <section id="reduce" class="screen">
+        <article class="card">
+          <div class="section-head"><h2>Reduce Stock</h2><span class="pill warn">REDUCE Transaction</span></div>
+          <div class="form-grid">
+            <label><span>Stock Item</span><select><option>Urea</option><option>Diesel</option></select></label>
+            <label><span>Current Available Balance</span><input readonly value="20 Bags / 900 Kg" /></label>
+            <label><span>Usage Date</span><input type="date" /></label>
+            <label><span>Package Count</span><input value="5" /></label>
+            <label><span>Base Quantity</span><input readonly value="225 Kg" /></label>
+            <label><span>Balance After Usage</span><input readonly value="15 Bags / 675 Kg" /></label>
+            <label><span>Used For</span><select><option>Fertigation</option><option>Pest Spray</option><option>Irrigation Repair</option></select></label>
+            <label><span>Zone</span><select><option>South Block</option><option>East Block</option></select></label>
+            <label><span>Row Range</span><input value="Row 1-3" /></label>
+            <label><span>Worker Name</span><select><option>Farm Manager</option><option>Stock Person</option></select></label>
+            <button class="button danger">Save Reduce Stock</button>
+          </div>
+        </article>
+      </section>
+
+      <section id="history" class="screen">
+        <article class="card">
+          <div class="section-head"><h2>Stock History</h2><span class="pill info">Transactions</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Date</th><th>Type</th><th>Item</th><th>Quantity</th><th>Base Quantity</th><th>Cost</th><th>Used For</th><th>Supplier</th><th>Notes</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>2026-06-09</td><td>ADD</td><td>Urea</td><td>20 Bags</td><td>900 Kg</td><td>27000</td><td>-</td><td>Local Agri Supplier</td><td>Purchase entry</td></tr>
+                <tr><td>2026-06-09</td><td>REDUCE</td><td>Urea</td><td>5 Bags</td><td>225 Kg</td><td>-</td><td>Fertigation</td><td>-</td><td>South Block Row 1-3</td></tr>
+                <tr><td>2026-06-09</td><td>ADD</td><td>Diesel</td><td>200 Litre</td><td>200 Litre</td><td>18400</td><td>-</td><td>Fuel station</td><td>Tank refill</td></tr>
+                <tr><td>2026-06-09</td><td>REDUCE</td><td>Diesel</td><td>25 Litre</td><td>25 Litre</td><td>-</td><td>Tractor Usage</td><td>-</td><td>Field work</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      document.querySelectorAll(".tab").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
+          document.querySelectorAll(".screen").forEach((screen) => screen.classList.remove("active"));
+          button.classList.add("active");
+          document.getElementById(button.dataset.screen).classList.add("active");
+        });
+      });
+    </script>
+  </body>
+</html>

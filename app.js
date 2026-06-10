@@ -56,7 +56,7 @@ const pageTitles = {
   pest: "Pest / Disease Observation",
   exceptions: "Tree-level Exception Tracking",
   labor: "Labor Attendance & Activity",
-  stock: "Stock Purchase & Usage",
+  stock: "Stock Management",
   harvest: "Harvest Batch Tracking",
   equipment: "Equipment & Utility Tracking",
   workorders: "Work Order Planning",
@@ -119,6 +119,7 @@ let selectedWorkPlanActivityIndex = 0;
 let workPlanPanelMode = "add";
 let structureSubmenu = "land";
 let selectedLandBlock = "South Block";
+let stockSubmenu = "balance";
 const workPlanStatuses = ["Open", "In Progress", "Cancelled", "Hold", "Completed"];
 const workerRoleMaster = [
   { name: "Farm Owner", role: "Admin", accessArea: "All sections", status: "Active" },
@@ -779,79 +780,129 @@ function entryForm(type) {
 }
 
 function stockMaintenance() {
-  const itemByCode = Object.fromEntries(stockItemMaster.map((item) => [item.code, item]));
-  const lowLots = stockLots.filter((lot) => {
-    const item = itemByCode[lot.itemCode];
-    return item && lot.availableQty <= item.reorderLevel;
-  });
-  const totalItems = stockItemMaster.length;
-  const fertilizerTypes = stockItemMaster
-    .filter((item) => item.category === "Fertilizers")
-    .map((item) => item.type);
+  const stockTabs = [
+    ["balance", "Stock Balance"],
+    ["master", "Stock Master"],
+    ["add", "Add Stock"],
+    ["reduce", "Reduce Stock"],
+    ["history", "History"]
+  ].map(([id, label]) => `
+    <button class="subnav-button ${stockSubmenu === id ? "active" : ""}" data-stock-submenu="${id}">
+      ${label}
+    </button>
+  `).join("");
 
-  const lotRows = stockLots.map((lot) => {
-    const item = itemByCode[lot.itemCode];
-    const tone = lot.status === "Reorder" ? "bad" : lot.status === "Low" ? "warn" : "good";
-    return `
-      <tr>
-        <td><strong>${item.item}</strong><div class="table-sub">${item.category} / ${item.type}</div></td>
-        <td>${lot.availableQty} ${item.unit}</td>
-        <td>${lot.location}</td>
-        <td>${pill(lot.status, tone)}</td>
-      </tr>
-    `;
-  }).join("");
+  const stockBalanceRows = [
+    ["Fertilizer", "Nitrogen Fertilizer", "Urea", "15 Bags / 675 Kg", "Kg", "15 Bags", "10 Bags", pill("OK", "good")],
+    ["Fertilizer", "Phosphorus Fertilizer", "DAP", "4 Bags / 200 Kg", "Kg", "4 Bags", "5 Bags", pill("Low Stock", "warn")],
+    ["Fuel / Oil", "Diesel", "Diesel", "175 Litre", "Litre", "-", "100 Litre", pill("OK", "good")],
+    ["Irrigation Material", "Connector", "16mm Drip Connector", "120 Piece", "Piece", "-", "50 Piece", pill("OK", "good")]
+  ];
+  const stockBalanceTable = stockBalanceRows
+    .map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`)
+    .join("");
+
+  const historyRows = [
+    ["2026-06-09", "ADD", "Urea", "20 Bags", "900 Kg", "Rs 27000", "-", "Local Agri Supplier", "Purchase entry"],
+    ["2026-06-09", "REDUCE", "Urea", "5 Bags", "225 Kg", "-", "Fertigation", "-", "South Block Row 1-3"],
+    ["2026-06-09", "ADD", "Diesel", "200 Litre", "200 Litre", "Rs 18400", "-", "Fuel station", "Tank refill"],
+    ["2026-06-09", "REDUCE", "Diesel", "25 Litre", "25 Litre", "-", "Tractor Usage", "-", "Field work"]
+  ].map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("");
+
+  const panels = {
+    balance: card(`
+      <div class="section-head"><h2>Stock Balance</h2>${pill("Current", "good")}</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Category</th><th>Type</th><th>Item</th><th>Current Balance</th><th>Base Unit</th><th>Package Balance</th><th>Minimum</th><th>Status</th></tr>
+          </thead>
+          <tbody>${stockBalanceTable}</tbody>
+        </table>
+      </div>
+    `),
+    master: `
+      <div class="stock-simple-layout">
+        ${card(`
+          <div class="section-head"><h2>Add Category / Type</h2>${pill("Master", "info")}</div>
+          <div class="grid grid-2">
+            ${field("Category Name", "text", null, "Organic Input")}
+            ${field("Stock Type Name", "text", null, "Bio-fertilizer")}
+          </div>
+          <div class="form-actions">
+            <button class="button secondary">Add Category</button>
+            <button class="button secondary">Add Type</button>
+          </div>
+        `)}
+        ${card(`
+          <div class="section-head"><h2>Add Stock Item</h2>${pill("Item", "good")}</div>
+          <div class="grid grid-2">
+            ${field("Category", "text", ["Fertilizer", "Fuel / Oil", "Irrigation Material", "Crop Protection"])}
+            ${field("Type", "text", ["Nitrogen Fertilizer", "Phosphorus Fertilizer", "Diesel", "Connector"])}
+            ${field("Item Name", "text", null, "Urea")}
+            ${field("Base Unit", "text", ["Kg", "Litre", "Piece"])}
+            ${field("Has Package", "text", ["Yes", "No"])}
+            ${field("Package Name", "text", null, "Bag")}
+            ${field("Package Quantity", "number", null, "45")}
+            ${field("Minimum Stock", "text", null, "10 Bag")}
+          </div>
+          <div class="form-actions"><button class="button primary">${icons.save} Add Item</button></div>
+        `)}
+      </div>
+    `,
+    add: card(`
+      <div class="section-head"><h2>Add Stock</h2>${pill("ADD Transaction", "good")}</div>
+      <div class="grid grid-2">
+        ${field("Stock Item", "text", ["Urea", "DAP", "Diesel", "16mm Drip Connector"])}
+        ${field("Purchase Date", "date")}
+        ${field("Package Count", "number", null, "20")}
+        ${field("Quantity Per Package", "number", null, "45")}
+        <label class="field"><span>Base Quantity</span><input readonly value="900 Kg" /></label>
+        ${field("Cost Per Package", "number", null, "1350")}
+        <label class="field"><span>Total Cost</span><input readonly value="27000" /></label>
+        ${field("Supplier", "text", null, "Local Agri Supplier")}
+        ${field("Invoice Number", "text", null, "INV-1001")}
+        ${field("Storage Location", "text", ["Stock Yard", "Fertilizer Room", "Fuel Store", "Irrigation Spare Bin"])}
+      </div>
+      <div class="form-actions"><button class="button primary">${icons.save} Save Add Stock</button></div>
+    `),
+    reduce: card(`
+      <div class="section-head"><h2>Reduce Stock</h2>${pill("REDUCE Transaction", "warn")}</div>
+      <div class="grid grid-2">
+        ${field("Stock Item", "text", ["Urea", "DAP", "Diesel", "16mm Drip Connector"])}
+        <label class="field"><span>Current Available Balance</span><input readonly value="20 Bags / 900 Kg" /></label>
+        ${field("Usage Date", "date")}
+        ${field("Package Count", "number", null, "5")}
+        <label class="field"><span>Base Quantity</span><input readonly value="225 Kg" /></label>
+        <label class="field"><span>Balance After Usage</span><input readonly value="15 Bags / 675 Kg" /></label>
+        ${field("Used For", "text", ["Fertigation", "Pest Spray", "Irrigation Repair", "Equipment Service", "Labor Activity"])}
+        ${field("Block", "text", blockNameOptions())}
+        ${field("Row Range", "text", rowNameOptions())}
+        ${field("Worker Name", "text", workerNameOptions)}
+      </div>
+      <div class="form-actions"><button class="button primary">${icons.save} Save Reduce Stock</button></div>
+    `),
+    history: card(`
+      <div class="section-head"><h2>Stock History</h2>${pill("Transactions", "info")}</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Type</th><th>Item</th><th>Quantity</th><th>Base Quantity</th><th>Cost</th><th>Used For</th><th>Supplier</th><th>Notes</th></tr>
+          </thead>
+          <tbody>${historyRows}</tbody>
+        </table>
+      </div>
+    `)
+  };
 
   return `
-    <div class="stock-simple-layout">
-      ${card(`
-        <div class="section-head"><h2>Current Stock</h2>${pill(`${lowLots.length} low`, lowLots.length ? "warn" : "good")}</div>
-        <div class="table-wrap">
-          <table class="stock-compact-table">
-            <thead><tr><th>Item</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
-            <tbody>${lotRows}</tbody>
-          </table>
-        </div>
-      `)}
-
-      ${card(`
-        <div class="section-head"><h2>Add Stock</h2>${pill("Purchase", "good")}</div>
-        <div class="grid grid-2">
-          ${field("Category", "text", stockCategories.map((category) => category.name))}
-          ${field("Type", "text", stockCategories.flatMap((category) => category.types))}
-          ${field("Item Name", "text", stockItemMaster.map((item) => item.item))}
-          ${field("Quantity", "number", null, "Quantity")}
-          ${field("Unit", "text", ["kg", "L", "pieces", "bags", "crates", "meters"])}
-          ${field("Location", "text", ["Stock Yard / Fertilizer Room", "Chemical Cabinet", "Fuel Store", "Irrigation Spare Bin", "Tool Room"])}
-        </div>
-        <div class="form-actions"><button class="button primary">${icons.save} Save Stock</button></div>
-      `)}
+    <div class="grid grid-3">
+      ${card(`<div class="section-head"><h2>Items</h2>${pill("Master", "info")}</div><strong class="metric">4</strong><p>Urea, DAP, Diesel, and 16mm Drip Connector seeded.</p>`)}
+      ${card(`<div class="section-head"><h2>Low Stock</h2>${pill("Alert", "warn")}</div><strong class="metric">1</strong><p>DAP is below minimum stock threshold.</p>`)}
+      ${card(`<div class="section-head"><h2>Rule</h2>${pill("Protected", "good")}</div><strong class="metric stock-rule-text">No Manual Balance</strong><p>Balance changes only through ADD and REDUCE transactions.</p>`)}
     </div>
-
-    <div class="stock-simple-layout stock-layout">
-      ${card(`
-        <div class="section-head"><h2>Use / Adjust Stock</h2>${pill("Issue", "warn")}</div>
-        <div class="grid grid-2">
-          ${field("Action", "text", ["Issue to field", "Return from field", "Adjustment"])}
-          ${field("Item", "text", stockItemMaster.map((item) => item.item))}
-          ${field("Quantity", "number", null, "Quantity")}
-          ${field("Block / Use", "text", ["Fertigation", "Pest spray", "Irrigation repair", "Equipment service", ...blockNameOptions()])}
-        </div>
-        <div class="form-actions"><button class="button primary">${icons.save} Save Use</button></div>
-      `)}
-
-      ${card(`
-        <div class="section-head"><h2>Item Setup</h2>${pill(`${totalItems} items`, "info")}</div>
-        <div class="grid grid-2">
-          ${field("New Item Category", "text", stockCategories.map((category) => category.name))}
-          ${field("New Item Type", "text", stockCategories.flatMap((category) => category.types))}
-          ${field("Item Name", "text", null, "Urea, Potassium, Neem oil")}
-          ${field("Minimum Stock", "number", null, "Reorder level")}
-        </div>
-        <div class="form-actions"><button class="button primary">${icons.save} Save Item</button></div>
-        <div class="kpi-sub stock-note">Fertilizer examples: ${[...new Set(fertilizerTypes)].join(", ")}.</div>
-      `)}
-    </div>
+    <div class="subnav">${stockTabs}</div>
+    <div class="stock-prototype-panel">${panels[stockSubmenu] || panels.balance}</div>
   `;
 }
 
@@ -1650,6 +1701,12 @@ document.addEventListener("click", (event) => {
   const structureButton = event.target.closest("[data-structure-submenu]");
   if (structureButton) {
     structureSubmenu = structureButton.dataset.structureSubmenu;
+    renderContent();
+  }
+
+  const stockButton = event.target.closest("[data-stock-submenu]");
+  if (stockButton) {
+    stockSubmenu = stockButton.dataset.stockSubmenu;
     renderContent();
   }
 

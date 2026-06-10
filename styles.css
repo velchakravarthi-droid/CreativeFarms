@@ -591,6 +591,22 @@ textarea:focus {
   margin-top: 12px;
 }
 
+.metric {
+  display: block;
+  font-size: 30px;
+  line-height: 1;
+  margin-top: 10px;
+}
+
+.stock-rule-text {
+  font-size: 22px;
+}
+
+.stock-prototype-panel {
+  display: grid;
+  gap: 14px;
+}
+
 .cost-entry-grid {
   grid-template-columns: 1fr;
 }
