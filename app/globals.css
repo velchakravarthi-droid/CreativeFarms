@@ -408,6 +408,26 @@ tr:last-child td {
   border-bottom: 0;
 }
 
+.table-sub {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.property-cost-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.property-cost-summary strong {
+  font-size: 22px;
+}
+
+.property-cost-summary span {
+  color: var(--muted);
+  font-weight: 750;
+}
+
 .entry-grid {
   display: grid;
   gap: 12px;

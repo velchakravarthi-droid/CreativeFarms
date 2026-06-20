@@ -1326,6 +1326,7 @@ function approvals() {
 }
 
 function costs() {
+  const farmPropertyCostOptions = farmProperties.map(([type, name]) => `${type} - ${name}`);
   const expenseCategories = [
     "Labor salary",
     "Labor bonus / advance",
@@ -1394,10 +1395,12 @@ function costs() {
         <div class="section-head"><h2>Add Expense</h2>${pill("Standard entry", "good")}</div>
         <div class="grid cost-entry-grid">
           ${field("Date", "date")}
+          ${field("Farm Property", "text", farmPropertyCostOptions)}
           ${field("Cost Type", "text", expenseCategories)}
           ${field("Linked Module", "text", linkedActivities)}
           ${field("Block / Area", "text", ["General farm", ...blockNameOptions(), "All Blocks", "Not block specific"])}
           ${field("Expense For", "text", null, "Worker, item, repair, bill, or work")}
+          ${field("Count / Quantity", "number", null, "Enter count manually")}
           ${field("Amount", "number", null, "Cost amount")}
           ${field("Paid By", "text", ["Cash", "Bank", "UPI", "Credit", "Not paid"])}
           ${field("Payment Status", "text", ["Paid", "Due", "Advance", "Part paid"])}
